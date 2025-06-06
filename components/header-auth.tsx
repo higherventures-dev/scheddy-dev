@@ -11,8 +11,18 @@ export default async function AuthButton() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  
 
   if (!hasEnvVars) {
+    
+  // Query the `profiles` table for the custom role
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles") // change this if your table has a different name
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = profile?.role ?? "User"; // fallback if role is missing
     return (
       <>
         <div className="flex gap-4 items-center">
@@ -32,7 +42,7 @@ export default async function AuthButton() {
               disabled
               className="opacity-75 cursor-none pointer-events-none"
             >
-              <Link href="/sign-in">Sign in</Link>
+              <Link href="/sign-in">Log in</Link>
             </Button>
             <Button
               asChild
@@ -48,9 +58,11 @@ export default async function AuthButton() {
       </>
     );
   }
+
+
   return user ? (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
+      Hey, {user.email}! 
       <form action={signOutAction}>
         <Button type="submit" variant={"outline"}>
           Sign out
@@ -60,7 +72,7 @@ export default async function AuthButton() {
   ) : (
     <div className="flex gap-2">
       <Button asChild size="sm" variant={"outline"}>
-        <Link href="/sign-in">Sign in</Link>
+        <Link href="/sign-in">Log in</Link>
       </Button>
       <Button asChild size="sm" variant={"default"}>
         <Link href="/sign-up">Sign up</Link>

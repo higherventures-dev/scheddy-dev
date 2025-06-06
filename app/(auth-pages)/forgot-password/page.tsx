@@ -28,6 +28,11 @@ export default async function ForgotPassword(props: {
           <SubmitButton formAction={forgotPasswordAction}>
             Reset Password
           </SubmitButton>
+          <Label htmlFor="email">Email</Label>
+          <Input name="email" placeholder="you@example.com" required />
+          <SubmitButton formAction={forgotPasswordAction}>
+            Login Without Password
+          </SubmitButton>
           <FormMessage message={searchParams} />
         </div>
       </form>
