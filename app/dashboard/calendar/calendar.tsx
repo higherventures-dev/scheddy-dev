@@ -1,6 +1,6 @@
 "use client";
 
-import { Week } from "#/lib/components/calendar/Week";
+import { Week } from "/lib/components/calendar/Week";
 import { useState } from "react";
 
 export const Calendar = ({

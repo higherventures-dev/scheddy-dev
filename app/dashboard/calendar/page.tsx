@@ -1,4 +1,4 @@
-import { getBusinessEmployees } from "#/lib/actions/get-business-employees";
+import { getBusinessEmployees } from "/lib/actions/get-business-employees";
 import { Calendar } from "./calendar";
 
 export default async function Page({

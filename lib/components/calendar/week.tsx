@@ -1,6 +1,6 @@
 "use client";
 
-import { dayjs } from "#/lib/dayjs";
+import { dayjs } from "/lib/dayjs";
 import { Button } from "@headlessui/react";
 import clsx from "clsx";
 import { times } from "lodash-es";
