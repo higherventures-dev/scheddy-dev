@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "#/lib/db";
+import { db } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({

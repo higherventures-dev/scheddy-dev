@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "#/lib/db";
+import { db } from "@/lib/db";
 
 export const getBusinessCustomers = async (businessId: string) => {
 	const business = await db.query.businesses.findFirst({

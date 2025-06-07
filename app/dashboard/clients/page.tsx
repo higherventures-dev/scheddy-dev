@@ -1,4 +1,4 @@
-import { getBusinessCustomers } from "#/lib/actions/get-business-customers";
+import { getBusinessCustomers } from "@/lib/actions/get-business-customers";
 import { Customers } from "./customers";
 
 export default async function Page({
