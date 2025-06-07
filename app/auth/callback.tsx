@@ -1,13 +1,9 @@
 
-Create a Next.js route (e.g., /auth/callback) that handles the URL the user lands on after clicking the link.
-
-ts
-Copy
-Edit
 // pages/auth/callback.tsx
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '@/lib/supabaseClient'
+import { createClient } from "@/utils/supabase/client";
+  const supabase = createClient();
 
 export default function Callback() {
   const router = useRouter()
