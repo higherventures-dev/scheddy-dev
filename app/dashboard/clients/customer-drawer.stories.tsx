@@ -1,6 +1,5 @@
 import { getCustomerMock } from "#/lib/actions/get-customer.mock";
 import type { Meta, StoryObj } from "@storybook/react";
-import { fn } from "@storybook/test";
 import { useState } from "react";
 import { CustomerDrawer } from "./customer-drawer";
 
@@ -25,11 +24,6 @@ const meta = {
 					Open overlay
 				</button>
 
-				<CustomerDrawer
-					customerId="1"
-					open={open}
-					onClose={fn(() => setOpen(false))}
-				/>
 			</div>
 		);
 	},

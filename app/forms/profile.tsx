@@ -3,7 +3,23 @@
 import { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 
-export default function ProfileForm({ userId, profile }) {
+interface ProfileFormProps {
+  userId: string;
+  profile?: {
+    businessname?: string;
+    logo?: string;
+    websitename?: string;
+    firstname?: string;
+    lastname?: string;
+    address?: string;
+    address2?: string;
+    state?: string;
+    postalcode?: string;
+    phonenumber?: string;
+  };
+}
+
+export default function ProfileForm({ userId, profile }: ProfileFormProps) {
   const supabase = createClient();
   const [businessname, setBusinessName] = useState(profile?.businessname || "");
   const [logo, setLogoName] = useState(profile?.logo || "");
@@ -18,7 +34,7 @@ export default function ProfileForm({ userId, profile }) {
 
   const [success, setSuccess] = useState(false);
   
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSuccess(false);
 
