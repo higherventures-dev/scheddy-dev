@@ -1,23 +1,18 @@
 'use client'
-
-import { usePathname } from 'next/navigation'
-import Header from '@/components/marketing/Header'
-import Footer from '@/components/marketing/Footer'
+import MarketingHeader from '@/components/marketing/header'
+import MarketingFooter from '@/components/marketing/footer'
 
 export default function MarketingLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-
-  const isDashboard = pathname?.startsWith('/dashboard')
 
   return (
     <>
-      {!isDashboard && <Header />}
+      <MarketingHeader />
       <main>{children}</main>
-      {!isDashboard && <Footer />}
+      <MarketingFooter />
     </>
   )
 }

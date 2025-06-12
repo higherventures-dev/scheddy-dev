@@ -35,14 +35,14 @@ export default function navigation() {
           <Link
             key={link.name}
             href={link.href}
-            className={clsx('flex h-[40px] grow items-center justify-center gap-2 rounded-md p-3 text-sm text-xs hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
+            className={clsx('flex h-[40px] grow items-left justify-left gap-2 rounded-md p-3 text-white text-sm text-xs hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
               {
                 'text-blue-600': pathname === link.href,
               },
             )}
           >
             <LinkIcon className="w-6" />
-            <p className="hidden md:block">{link.name}</p>
+            <p className="text-white">{link.name}</p>
           </Link>
         );
       })}

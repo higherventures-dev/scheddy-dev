@@ -142,7 +142,7 @@ export const resetPasswordAction = async (formData: FormData) => {
 export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  return redirect("/sign-in");
+  return redirect("/auth/sign-in");
 };
 
 export const magicLinkAction = async (formData: FormData) => {
@@ -153,10 +153,10 @@ export const magicLinkAction = async (formData: FormData) => {
     email
   });
 
-  if (error) {
-    return encodedRedirect("error", "/magic-link", error.message);
-  }
-  return redirect("/protected");
+  // if (error) {
+  //   return encodedRedirect("error", "/magic-link", error.message);
+  // }
+  // return redirect("/protected");
 }
 
 export const signInWithPhoneAction = async (formData: FormData) => {
@@ -170,5 +170,5 @@ export const signInWithPhoneAction = async (formData: FormData) => {
   if (error) {
     return encodedRedirect("error", "/sign-in-with-phone", error.message);
   }
-  return redirect("/protected");
+  // return redirect("/protected");
 }

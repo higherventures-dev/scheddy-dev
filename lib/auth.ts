@@ -1,9 +1,7 @@
-import { supabase } from './supabaseClient'
+// import { supabase } from '@/utils/supabase/client'
+import { NextAuthOptions } from "next-auth";
 
-export const sendMagicLink = async (email: string) => {
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-    },
-  })
+export const authOptions: NextAuthOptions = {
+  providers: [ /* your providers */ ],
+  callbacks: { /* ... */ }
+};

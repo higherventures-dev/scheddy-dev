@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import NavLinks from '@/app/ui/dashboard/navigation';
-import Logo from '@/app/ui/scheddy-logo';
+import NavLinks from '@/ui/dashboard/navigation';
+import Logo from '@/ui/scheddy-logo';
 import { PowerIcon } from '@heroicons/react/24/outline';
 
 export default function SideBar() {

@@ -10,10 +10,9 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <Logos />
+      {/* <Logos /> */}
       <FeatureAlt />
-      <Testimonials />
-      <FeatureGrid />
+      {/* <Testimonials /> */}
       <Features />
       <Cta />
     </>

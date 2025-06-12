@@ -1,7 +1,7 @@
 'use client'
 export default function Testimonials() {
   return (
-    <section className="py-20 bg-gray-100">
+    <section className="py-20">
       <div className="max-w-6xl mx-auto px-4 text-center">
         <h2 className="text-3xl font-bold">What Teams Are Saying</h2>
         <p className="mt-6 text-gray-600">Scheddy has transformed how we coordinate our team — no more chaos.</p>

@@ -6,5 +6,5 @@ export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
 
     // if (!session) redirect("auth/sign-in");
-    return <p>Overview</p>;
+    return <p>Settings</p>;
 }

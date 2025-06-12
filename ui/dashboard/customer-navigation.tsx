@@ -18,7 +18,7 @@ const links = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
   { name: 'Bookings', href: '/dashboard/calendar', icon: CalendarIcon },
   { name: 'Messages', href: '/dashboard/messages', icon: EnvelopeIcon },
-  { name: 'Profile', href: '/dashboard/clients', icon: UserIcon },
+  { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 
