@@ -2,7 +2,7 @@
 import Link from "next/link"
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-
+// NOTE
 export default function Header() {
   return (
      <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">

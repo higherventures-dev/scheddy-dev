@@ -1,6 +1,6 @@
 'use client'
 import Link from "next/link"
-
+// NOTE
 export default function Footer() {
   return (
     <footer className="py-8 border-t">
