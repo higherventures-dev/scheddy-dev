@@ -1,6 +1,6 @@
 'use client'
-import MarketingHeader from '@/components/marketing/header'
-import MarketingFooter from '@/components/marketing/footer'
+import MarketingHeader from '@/components/marketing/Header'
+import MarketingFooter from '@/components/marketing/Footer'
 
 export default function MarketingLayout({
   children,
