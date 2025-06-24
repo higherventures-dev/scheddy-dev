@@ -1,6 +1,11 @@
 import { ThemeProvider } from "next-themes";
 import '@/styles/globals.css';
-import { inter } from '@/app/ui/fonts';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+});
 
 export default function RootLayout({
   children,
@@ -8,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
   }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={ '${inter.className} antialiased'}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

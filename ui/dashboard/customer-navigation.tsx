@@ -38,7 +38,7 @@ export default function navigation() {
               },
             )}
           >
-            <LinkIcon className="w-6" />
+            <LinkIcon className="w-4" />
             <p className="hidden md:block">{link.name}</p>
           </Link>
         );

@@ -13,6 +13,7 @@ import clsx from 'clsx';
 // Depending on the size of the application, this would be stored in a database.
 const links = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
+  { name: 'Clients', href: '/dashboard/clients', icon: UserGroupIcon },
   { name: 'Members', href: '/dashboard/members', icon: HomeIcon },
   { name: 'General', href: '/dashboard/general', icon: UserGroupIcon },
   { name: 'Staff', href: '/dashboard/staff', icon: UserGroupIcon },
@@ -21,7 +22,7 @@ const links = [
   { name: 'Payments', href: '/dashboard/payments', icon: UserGroupIcon },
   { name: 'Integrations', href: '/dashboard/integrations', icon: UserGroupIcon },
   { name: 'Appointments', href: '/dashboard/calendar-appointments', icon: UserGroupIcon },
-  { name: 'Form Templates', href: '/dashboard/form-templates', icon: UserGroupIcon },
+  { name: 'Forms', href: '/dashboard/form-templates', icon: UserGroupIcon },
   { name: 'Subscriptions', href: '/dashboard/subscription-billing', icon: UserGroupIcon },
 ];
 
@@ -35,14 +36,14 @@ export default function navigation() {
           <Link
             key={link.name}
             href={link.href}
-            className={clsx('flex h-[40px] grow items-left justify-left gap-2 rounded-md p-3 text-white text-sm text-xs hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
+            className={clsx('flex h-[40px] grow items-left justify-left gap-2 rounded-md p-3 text-white text-xs hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
               {
                 'text-blue-600': pathname === link.href,
               },
             )}
           >
-            <LinkIcon className="w-6" />
-            <p className="text-white">{link.name}</p>
+            <LinkIcon className="w-4" />
+            <p className="text-white w-4 text-xs">{link.name}</p>
           </Link>
         );
       })}

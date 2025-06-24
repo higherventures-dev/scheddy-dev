@@ -20,12 +20,15 @@ export const signUpAction = async (formData: FormData) => {
   if (!email || !password) {
     return encodedRedirect(
       "error",
-      "/sign-up",
+      "/auth/sign-up",
       "Email and password are required",
     );
   }
 
-  const { error } = await supabase.auth.signUp({
+  console.log("🧪 Supabase project in use:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log("🧪 Supabase client:", supabase);
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -37,14 +40,19 @@ export const signUpAction = async (formData: FormData) => {
       },
     },
   });
+  
+console.log("📡 Supabase project:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log("👤 Created user:", data?.user);
+console.log("📬 Session:", data?.session);
+console.log("⚠️ Error:", error);
 
   if (error) {
     console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/sign-up", error.message);
+    return encodedRedirect("error", "/auth/sign-up", error.message);
   } else {
     return encodedRedirect(
       "success",
-      "/sign-up",
+      "/auth/sign-up",
       "Thanks for signing up! Please check your email for a verification link.",
     );
   }
@@ -61,7 +69,7 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/sign-in", error.message);
+    return encodedRedirect("error", "/auth/sign-in", error.message);
   }
 
   return redirect("/dashboard");
@@ -75,7 +83,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   const callbackUrl = formData.get("callbackUrl")?.toString();
 
   if (!email) {
-    return encodedRedirect("error", "/forgot-password", "Email is required");
+    return encodedRedirect("error", "/auth/forgot-password", "Email is required");
   }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -97,7 +105,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
 
   return encodedRedirect(
     "success",
-    "/forgot-password",
+    "/auth/forgot-password",
     "Check your email for a link to reset your password.",
   );
 };
@@ -111,7 +119,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (!password || !confirmPassword) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/auth/protected/reset-password",
       "Password and confirm password are required",
     );
   }
@@ -119,7 +127,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (password !== confirmPassword) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/auth/protected/reset-password",
       "Passwords do not match",
     );
   }
@@ -131,12 +139,12 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (error) {
     encodedRedirect(
       "error",
-      "/protected/reset-password",
+      "/auth/protected/reset-password",
       "Password update failed",
     );
   }
 
-  encodedRedirect("success", "/protected/reset-password", "Password updated");
+  encodedRedirect("success", "/auth/protected/reset-password", "Password updated");
 };
 
 export const signOutAction = async () => {
@@ -168,7 +176,7 @@ export const signInWithPhoneAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/sign-in-with-phone", error.message);
+    return encodedRedirect("error", "/auth/sign-in-with-phone", error.message);
   }
   // return redirect("/protected");
 }

@@ -45,7 +45,7 @@ export default async function Signup(props: {
             <option value="">Choose your role</option>
             <option value="artist">Artist</option>
             <option value="studio">Studio</option>
-            <option value="customer">Customer</option>
+            <option value="customer">Client</option>
             <option value="admin">Admin</option>
           </select>
 

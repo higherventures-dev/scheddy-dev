@@ -27,18 +27,18 @@ const fetcher = (url: string) =>
 		.then((data) => z.array(schema).parse(data));
 
 type Props = {
-	initialCustomers: z.infer<typeof schema>[];
+	initialClients: z.infer<typeof schema>[];
 };
 
-export const Customers = ({ initialCustomers }: Props) => {
+export const Clients = ({ initialClients }: Props) => {
 	const { id } = useParams<{ id: string }>();
 	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+	const [selectedClient, setSelectedClient] = useState<string | null>(null);
 
 	const url = new URL("/api/clients", window.location.href);
 	url.searchParams.set("businessId", id);
-	const { data: customers = [] } = useSWR(url.toString(), fetcher, {
-		fallbackData: initialCustomers,
+	const { data: clients = [] } = useSWR(url.toString(), fetcher, {
+		fallbackData: initialClients,
 	});
 
 	const searchTerms = [
@@ -48,9 +48,9 @@ export const Customers = ({ initialCustomers }: Props) => {
 			.map((match) => match[0]),
 	];
 
-	const filteredCustomers =
+	const filteredClients =
 		searchTerms.length !== 0
-			? customers.filter(({ email, familyName, givenName }) =>
+			? clients.filter(({ email, familyName, givenName }) =>
 					searchTerms.every(
 						(term) =>
 							email?.toLowerCase().includes(term) ||
@@ -58,7 +58,7 @@ export const Customers = ({ initialCustomers }: Props) => {
 							givenName?.toLowerCase().includes(term),
 					),
 				)
-			: customers;
+			: clients;
 
 	return (
 		<div className="bg-[#262626] px-5">
@@ -98,7 +98,7 @@ export const Customers = ({ initialCustomers }: Props) => {
 					<div />
 				</div>
 
-				{filteredCustomers.map(
+				{filteredClients.map(
 					({ id, givenName, familyName, email, phone }) => (
 						<div
 							key={id}
@@ -155,7 +155,7 @@ export const Customers = ({ initialCustomers }: Props) => {
 							<div role="cell">
 								<Button
 									className="cursor-pointer"
-									onClick={() => setSelectedCustomer(id)}
+									onClick={() => setSelectedClient(id)}
 								>
 									<FontAwesomeIcon
 										className="text-[#969696]"
@@ -170,13 +170,13 @@ export const Customers = ({ initialCustomers }: Props) => {
 				)}
 			</div>
 
-			{selectedCustomer && (
+			{/* {selectedCustomer && (
 				<CustomerDrawer
 					customerId={selectedCustomer}
 					open
 					onClose={() => setSelectedCustomer(null)}
 				/>
-			)}
+			)} */}
 		</div>
 	);
 };
