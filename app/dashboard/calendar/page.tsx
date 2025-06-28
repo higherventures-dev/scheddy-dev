@@ -1,4 +1,4 @@
-import SchedulerCalendar from '@/components/SchedulerCalendar';
+import SchedulerCalendar from '@components/SchedulerCalendar';
 
 export default function SchedulePage() {
   return (

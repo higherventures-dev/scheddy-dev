@@ -76,7 +76,7 @@ export default function SchedulerCalendar() {
 
       {selectedEvent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-600 p-6 rounded-md w-96 shadow-lg relative">
+          <div className="bg-gray-600 p-6 rounded-md w-96 shadow-lg relative text-white">
             <h2 className="text-lg font-bold mb-2 text-white">{selectedEvent.title}</h2>
             <p><strong className="text-white">Start:</strong> {selectedEvent.start.toLocaleString()}</p>
             <p><strong className="text-white">End:</strong> {selectedEvent.end.toLocaleString()}</p>
