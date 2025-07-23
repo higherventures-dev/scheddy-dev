@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
-import ProfileForm from "@/forms/profile";
+import ProfileForm from "@/components/forms/ProfileForm";
 export default async function Profile() {
 const supabase = await createClient();
 
@@ -25,8 +25,8 @@ const supabase = await createClient();
     .eq("id", user.id)
     .single();
 
-return ( <div className="p-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Edit Profile</h1>
+return ( <div className="p-6 w-[30vw]">
+      <h1 className="text-xl mb-4">Profile</h1>
       <ProfileForm userId={user.id} profile={profile} />
     </div>
 );

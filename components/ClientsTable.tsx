@@ -26,7 +26,19 @@ function getRandomColor(name: string) {
   return colors[index];
 }
 
-export function ClientsTable({ clients, onEdit }: { clients: Client[]; onEdit: (client: Client) => void }) {
+type ClientsTableProps = {
+  clients: Client[];
+  onEdit?: (client: Client) => void;
+  onView?: (client: Client) => void;
+  onDelete?: (client: Client) => void;
+};
+
+export function ClientsTable({
+  clients,
+  onEdit,
+  onView,
+  onDelete,
+  }: ClientsTableProps) {
   return (
     <div className="overflow-x-auto py-4">
       <table className="min-w-full table-auto">
@@ -56,13 +68,22 @@ export function ClientsTable({ clients, onEdit }: { clients: Client[]; onEdit: (
               <td className="px-4 py-2 text-white font-medium">{client.last_name}</td>
               <td className="px-4 py-2 text-white">{client.phone || '-'}</td>
               <td className="px-4 py-2 text-white">{client.email || '-'}</td>
-              <td className="px-4 py-2 text-right">
-                <button
-                  onClick={() => onEdit(client)}
-                  className="text-white hover:underline text-xs"
-                >
-                  ...
-                </button>
+              <td className="px-4 py-2 text-right space-x-2">
+                {onView && (
+                  <button onClick={() => onView(client)} className="text-blue-400 hover:underline text-xs">
+                    View
+                  </button>
+                )}
+                {onEdit && (
+                  <button onClick={() => onEdit(client)} className="text-yellow-400 hover:underline text-xs">
+                    Edit
+                  </button>
+                )}
+                {onDelete && (
+                  <button onClick={() => onDelete(client)} className="text-red-400 hover:underline text-xs">
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}

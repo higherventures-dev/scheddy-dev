@@ -1,11 +1,15 @@
 'use client';
 
-
+import clsx from 'clsx';
+import { Client } from './ClientsTable';
+import { ClientFormData } from './components/ClientsDrawer';
+import { AddClientForm } from './forms/AddClientForm';
+import { EditClientForm } from './forms/EditClientForm';
+import { ViewClientForm } from './forms/ViewClientForm';
+import { DeleteClientForm } from './forms/DeleteClientForm';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Client } from './ClientsTable';
-import clsx from 'clsx';
 import { Tab } from '@headlessui/react';
 const clientSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -14,34 +18,25 @@ const clientSchema = z.object({
   phone: z.string().optional(),
 });
 
-export type ClientFormData = z.infer<typeof clientSchema>;
-
 interface ClientsDrawerProps {
   initialData?: Client;
   onClose: () => void;
   onSubmit: (data: ClientFormData) => void;
   open: boolean;
+  mode?: 'add' | 'edit' | 'view' | 'delete';
 }
 
-export function ClientsDrawer({ initialData, onClose, onSubmit, open, mode='add' }: ClientsDrawerProps) {
+export function ClientsDrawer({
+  initialData,
+  onClose,
+  onSubmit,
+  open,
+  mode = 'add',
+}: ClientsDrawerProps) {
   const isView = mode === 'view';
   const isEdit = mode === 'edit';
   const isAdd = mode === 'add';
-
-  const tabs = ['General', 'Bookings', 'Reviews','Photos','Notes'];
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ClientFormData>({
-    resolver: zodResolver(clientSchema),
-    defaultValues: {
-      first_name: initialData?.first_name || '',
-      last_name: initialData?.last_name || '',
-      email: initialData?.email || '',
-      phone: initialData?.phone || '',
-    },
-  });
+  const isDelete = mode === 'delete';
 
   return (
     <div
@@ -67,9 +62,13 @@ export function ClientsDrawer({ initialData, onClose, onSubmit, open, mode='add'
         )}
       >
         <div className="p-6 overflow-y-auto h-full text-white">
+          {/* Header */}
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {initialData ? 'Edit Client' : 'Add Client'}
+            <h2 className="text-xl font-semibold capitalize">
+              {isView && 'View Client'}
+              {isEdit && 'Edit Client'}
+              {isAdd && 'Add Client'}
+              {isDelete && 'Delete Client'}
             </h2>
             <button
               onClick={onClose}
@@ -78,99 +77,20 @@ export function ClientsDrawer({ initialData, onClose, onSubmit, open, mode='add'
               ✕
             </button>
           </div>
+
+          {/* Conditional Form Rendering */}
           <div>
-            <Tab.Group>
-        <Tab.List className="flex space-x-2 px-4 pt-2">
-          {tabs.map((tab) => (
-            <Tab
-              key={tab}
-              className={({ selected }) =>
-                clsx(
-                  'px-3 py-1 text-sm rounded-md',
-                  selected ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'
-                )
-              }
-            >
-              {tab}
-            </Tab>
-          ))}
-        </Tab.List>
-
-        <Tab.Panels className="p-4 overflow-y-auto max-h-[calc(100vh-160px)]">
-          <Tab.Panel>
-            {/* Tab 1: Details Form */}
-             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">First name:</label>
-              <input
-                {...register('first_name')}
-                className="w-full border px-3 py-2 rounded-md text-white text-xs"
-              />
-              {errors.first_name && (
-                <p className="text-red-400 text-sm mt-1">{errors.first_name.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Last name:</label>
-              <input
-                {...register('last_name')}
-                className="w-full border px-3 py-2 rounded-md text-white text-xs"
-              />
-              {errors.last_name && (
-                <p className="text-red-400 text-sm mt-1">{errors.last_name.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                {...register('email')}
-                type="email"
-                className="w-full border px-3 py-2 rounded-md text-white text-xs"
-              />
-              {errors.email && (
-                <p className="text-red-400 text-sm mt-1">{errors.email.message}</p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Phone</label>
-              <input
-                {...register('phone')}
-                className="w-full border px-3 py-2 rounded-md text-white text-xs"
-              />
-              {errors.phone && (
-                <p className="text-red-400 text-sm mt-1">{errors.phone.message}</p>
-              )}
-            </div>
-            <div className="pt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                {initialData ? 'Update Client' : 'Save Client'}
-              </button>
-            </div>
-          </form>
-          </Tab.Panel>
-
-          <Tab.Panel>
-            {/* Tab 2: Notes */}
-            <textarea
-              name="notes"
-              placeholder="Internal notes..."
-              className="w-full border p-2 rounded-md text-sm h-32"
-              defaultValue={initialData?.notes}
-            />
-          </Tab.Panel>
-
-          <Tab.Panel>
-            {/* Tab 3: Activity or future history */}
-            <p className="text-sm text-gray-500">No activity yet.</p>
-          </Tab.Panel>
-        </Tab.Panels>
-      </Tab.Group>
+            {isAdd && <AddClientForm onSubmit={onSubmit} />}
+            {isEdit && initialData && (
+              <EditClientForm initialData={initialData} onSubmit={onSubmit} />
+            )}
+            {isView && initialData && (
+              <ViewClientForm initialData={initialData} onClose={onClose} />
+            )}
+            {isDelete && initialData && (
+              <DeleteClientForm initialData={initialData} onSubmit={onSubmit} />
+            )}
           </div>
-         
         </div>
       </div>
     </div>

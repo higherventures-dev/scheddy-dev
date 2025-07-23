@@ -15,6 +15,7 @@ export default function Page() {
   const [page, setPage] = useState(1);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'delete' | 'add'>('add');
 
   const ITEMS_PER_PAGE = 6;
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -129,6 +130,7 @@ export default function Page() {
             <button
               onClick={() => {
                 setSelectedClient(null);
+                setDrawerMode('add');
                 setDrawerOpen(true);
               }}
               className="text-xs px-4 py-2 bg-[#313131] text-white rounded-md hover:bg-blue-700"
@@ -164,6 +166,17 @@ export default function Page() {
             clients={paginated}
             onEdit={(client) => {
               setSelectedClient(client);
+              setDrawerMode('edit');
+              setDrawerOpen(true);
+            }}
+            onView={(client) => {
+              setSelectedClient(client);
+              setDrawerMode('view');
+              setDrawerOpen(true);
+            }}
+            onDelete={(client) => {
+              setSelectedClient(client);
+              setDrawerMode('delete');
               setDrawerOpen(true);
             }}
           />
@@ -201,7 +214,7 @@ export default function Page() {
         initialData={selectedClient}
         onClose={handleCloseDrawer}
         onSubmit={handleClientSubmit}
-        mode="view"
+        mode={drawerMode}
       />
     </div>
   );

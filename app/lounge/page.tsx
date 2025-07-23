@@ -1,9 +1,9 @@
-export default function Page() {
-    return (
-        <div>
-            <h1 className="text-xl p-4">Bookings</h1>
+export default function LoungePage() {
+    return (    
+        <div className="p-8">
+             <h1 className="text-lg">Welcome [ first name ]</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
             <div className="space-y-2 p-1 py-4 text-xs">
-                <h2 className="text-sm">July</h2>
                 <div className=" bg-[#3A3A3A] p-1 rounded">
                 <div className="grid grid-cols-6 gap-1">
                     <div className="col-span-1 p-4">JUL<br></br>17</div>
@@ -32,9 +32,7 @@ export default function Page() {
                 </div>
                 </div>
             </div>
-            <hr className="border-t border-[color:#3A3A3A]" />
             <div className="space-y-2 p-1 py-4 text-xs">
-                <h2 className="text-sm">July 2023</h2>
                 <div className=" bg-[#3A3A3A] p-1 rounded">
                 <div className="grid grid-cols-6 gap-1">
                     <div className="col-span-1 p-4">JUL<br></br>7</div>
@@ -49,5 +47,6 @@ export default function Page() {
                 </div>
             </div>
         </div>
+         </div>
     );
 }

@@ -47,52 +47,54 @@ export default function ProfileForm({ userId, profile }: ProfileFormProps) {
    };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 text-xs">
       <div>
-        <label className="block text-sm font-medium">Logo:</label>
+        <label className="block text-xs font-medium mb-1  text-gray-400">Business Logo</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded mb-3"
           value={logo}
           onChange={(e) => setLogoName(e.target.value)}
         />
-        <label className="block text-sm font-medium">Business Name</label>
+        <div className="border border-[#313131] mt-2 mb-4"></div>
+        <div className=" text-gray-400 pb-4">Basic information</div>
+        <label className="block text-xs font-medium mb-1">Business Name</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded mb-3"
           value={businessname}
           onChange={(e) => setBusinessName(e.target.value)}
         />
-        <label className="block text-sm font-medium">Website:</label>
+        <label className="block text-xs font-medium mb-1">Website</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded mb-3"
           value={websitename}
           onChange={(e) => setWebsiteName(e.target.value)}
         />
-        <label className="block text-sm font-medium">First Name</label>
+        <label className="block text-xs font-medium mb-1">First Name</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded mb-3"
           value={firstname}
           onChange={(e) => setFirstName(e.target.value)}
         />
-        <label className="block text-sm font-medium">Last Name</label>
+        <label className="block text-xs font-medium mb-1">Last Name</label>
         <input
           type="text"
-          className="w-full p-2 border rounded"
+          className="w-full p-2 border rounded mb-3"
           value={lastname}
           onChange={(e) => setLastName(e.target.value)}
         />
       </div>
-
+      <button type="submit" className="px-4 py-2 bg-white text-[#313131] rounded">
+        Save
+      </button>
       <div>
  
       </div>
 
-      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
-        Save Changes
-      </button>
+      
 
       {success && <p className="text-green-600">Profile updated!</p>}
     </form>

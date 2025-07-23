@@ -15,8 +15,6 @@ export const signUpAction = async (formData: FormData) => {
   const origin = (await headers()).get("origin");
 
 
-  console.log(`role`);
-
   if (!email || !password) {
     return encodedRedirect(
       "error",
@@ -24,9 +22,6 @@ export const signUpAction = async (formData: FormData) => {
       "Email and password are required",
     );
   }
-
-  console.log("🧪 Supabase project in use:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log("🧪 Supabase client:", supabase);
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -40,11 +35,6 @@ export const signUpAction = async (formData: FormData) => {
       },
     },
   });
-  
-console.log("📡 Supabase project:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-console.log("👤 Created user:", data?.user);
-console.log("📬 Session:", data?.session);
-console.log("⚠️ Error:", error);
 
   if (error) {
     console.error(error.code + " " + error.message);
@@ -63,7 +53,7 @@ export const signInAction = async (formData: FormData) => {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -71,8 +61,35 @@ export const signInAction = async (formData: FormData) => {
   if (error) {
     return encodedRedirect("error", "/auth/sign-in", error.message);
   }
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+  
+    const userId = user?.id;
+  
+    if (userId) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+  
+      const role = profile?.role?.toLowerCase();
 
-  return redirect("/dashboard");
+  switch (role) {
+    case 'client':
+      return redirect('/lounge');
+    case 'artist':
+      return redirect('/dashboard');
+    case 'studio':
+      return redirect('/studio');
+    case 'admin':
+      return redirect('/admin');
+    default:
+      return redirect('/unauthorized');
+  }
+  }
 };
 
 

@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
-import Header from '@/components/header-auth';
+import Header from '@/components/header-auth-client';
 import Footer from '@/components/dashboard/footer';
 import SideBar from '@/ui/dashboard/sidebar';
 import ArtistSideBar from '@/ui/dashboard/artist-sidebar';
@@ -18,8 +18,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Scheddy",
-  description: "The #1 Tattoo Artist Management System",
+  title: "",
+  description: "",
 };
 
 const geistSans = Geist({
@@ -33,7 +33,7 @@ const inter = Inter({
   display: 'swap',
 });
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function LoungeLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
 
   // ✅ Use secure method to fetch authenticated user
@@ -63,12 +63,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <main className={`min-h-screen flex flex-col items-center ${inter.variable} font-sans`}>
       <div className="flex h-screen w-screen flex-col md:flex-row md:overflow-hidden bg-[#1A1A1A]">
-        <div className="w-full flex-none md:w-48 border-r py-6 px-2">
-          <div className="flex items-center gap-2 text-xs py-1 px-3 pb-5 border-b-gray-100"><Image src="/business-avatar.png" alt="Wayword Tatoo" width={20} height={20} className="rounded"/> Wayward Tatoo</div>
-          <UserSidebar />
-        </div>
         <div className="flex-grow p-4 md:overflow-y-auto md:p-4 bg-[#262626]">
-          
           <Header>{children}</Header>
           <div className="border border-[#313131] mt-2"></div>
           {children}
