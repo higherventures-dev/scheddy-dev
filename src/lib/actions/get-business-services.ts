@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "#/lib/db";
+import { db } from "@/lib/db";
 import { pick } from "lodash-es";
 
 export const getBusinessServices = async (id: string) => {

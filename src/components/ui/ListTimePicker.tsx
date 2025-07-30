@@ -21,7 +21,7 @@ export default function ListTimePicker() {
   const timeOptions = generateTimeOptions(30); // You can adjust the interval here
 
   return (
-    <div className="w-full max-w-xs mx-auto text-white text-xs p-1">
+    <div className="text-white text-xs">
       <label className="block mb-1">Select a time:</label>
       <select
         value={selectedTime || ''}

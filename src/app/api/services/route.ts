@@ -1,5 +1,5 @@
-import { getBusinessServices } from "#/lib/actions/get-business-services";
-import { db } from "#/lib/db";
+import { getBusinessServices } from "@/lib/actions/get-business-services";
+import { db } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({

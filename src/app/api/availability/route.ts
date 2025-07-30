@@ -1,5 +1,5 @@
-import { getAvailability } from "#/lib/actions/get-availability";
-import { dayjs } from "#/lib/dayjs";
+import { getAvailability } from "@/lib/actions/get-availability";
+import { dayjs } from "@/lib/dayjs";
 import { z } from "zod";
 
 const schema = z.object({

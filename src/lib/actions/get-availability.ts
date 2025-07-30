@@ -1,7 +1,7 @@
 "use server";
 
-import type { Dayjs } from "#/lib/dayjs";
-import { db } from "#/lib/db";
+import type { Dayjs } from "@/lib/dayjs";
+import { db } from "@/lib/db";
 
 export const getAvailability = async ({
 	businessId,

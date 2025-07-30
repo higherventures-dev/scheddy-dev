@@ -12,7 +12,7 @@ type Props = {
 
 const DatePicker = ({ value, onChange }: Props) => {
   return (
-    <div className="w-full max-w-xs mx-auto text-white text-xs mb-4">
+    <div className="text-white text-xs">
       <label className="block mb-1">Select a date:</label>
       <ReactDatePicker
         selected={value}

@@ -1,6 +1,6 @@
-import type { EventInput } from "#/lib/components/calendar/schema";
-import { dayjs } from "#/lib/dayjs";
-import { db } from "#/lib/db";
+import type { EventInput } from "#@/lib/components/calendar/schema";
+import { dayjs } from "@/lib/dayjs";
+import { db } from "@/lib/db";
 import { z } from "zod";
 
 const schema = z.object({

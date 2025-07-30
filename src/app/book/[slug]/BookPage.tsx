@@ -10,12 +10,35 @@ import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
 import DatePicker from '@/components/ui/DatePicker';
+import { createClient } from '@/utils/supabase/server'
+
+const supabase = createClient();
 
 //const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-// const [firstName, setFirstName] = useState('');
-// const [lastName, setLastName] = useState('');
-// const [phone, setPhone] = useState('');
-// const [email, setEmail] = useState('');
+const [firstName, setFirstName] = useState('');
+const [lastName, setLastName] = useState('');
+const [phone, setPhone] = useState('');
+const [email, setEmail] = useState('');
+
+async function handleConfirmBooking() {
+
+   const bookingData = {
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone,
+      email: email
+    };
+  //const { error, data } = await supabase.from('bookings').insert([bookingData]);
+
+  // if (error) {
+  //   console.error('Error creating booking:', error.message);
+  //   // Show error to user
+  //   return;
+  // }
+
+  console.log('Booking created:', data);
+  // Show success state or navigate to confirmation page
+}
 
 // Step Components
 function Step1({
@@ -27,7 +50,7 @@ function Step1({
   selectedService: any;
   setSelectedService: (service: any) => void;
 }) {
-
+console.log("Selected Service", selectedService)
 useEffect(() => {
   }, [services, selectedService]);
 
@@ -37,13 +60,32 @@ useEffect(() => {
 
   return (
     <div>
-      <p className="text-xs text-gray-400">{selectedService.name}</p>
+      <p className="text-lg text-white text-bold pb-1">{selectedService.name}</p>
+      <p className="text-xs text-gray-400 pb-2">{selectedService.description}</p>
+      <p className="text-xs text-gray-400">{selectedService.price ? `$${selectedService.price}` : '$125'} – {convertMinutesToHours(selectedService.duration) || '45 min'}</p>
     </div>
   );
 }
 
+function convertMinutesToHours(minutes: number): string {
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hrs && mins) return `${hrs} hours | ${mins} mins`;
+  if (hrs) return `${hrs} hours`;
+  return `${mins} mins`;
+}
+
 function Step2() {
-  return <div className="text-xs">Austin Clark</div>;
+  return <div className="text-xs flex">
+    <Image
+            src={'/assets/images/anyone.png'}
+            alt="Austin Clark"
+            width="30"
+            height="30"
+            className="object-cover rounded-md"
+          />
+    <span className="pt-1 pl-3">Austin Clark</span></div>;
 }
 function Step3({
   selectedDate,
@@ -53,9 +95,12 @@ function Step3({
   setSelectedDate: (date: Date | null) => void;
 }) {
   return (
-    <div>
+    <div><div  className="mb-3">
       <DatePicker value={selectedDate} onChange={setSelectedDate} />
+    </div>
+    <div>
       <ListTimePicker />
+    </div>
     </div>
   );
 }
@@ -226,8 +271,9 @@ export default function BookPage({ slug }: { slug: string }) {
                 <div className="grid grid-cols-2 items-center gap-4 border-b py-4">
                   <div>
                     <div className="text-xs font-medium">{service.name || `Tattoo Service ${index + 1}`}</div>
+                    <div className="text-xs font-medium text-gray-400">{service.summary || `Tattoo Description ${index + 1}`}</div>
                     <div className="text-xs text-gray-500 mt-1">
-                      {service.price ? `$${service.price}` : '$125'} – {service.duration || '45 min'}
+                      {service.price ? `$${service.price}` : '$125'} – {convertMinutesToHours(service.duration) || '45 min'}
                     </div>
                   </div>
                   <div className="text-right">
@@ -325,21 +371,7 @@ export default function BookPage({ slug }: { slug: string }) {
                 <button
   onClick={async () => {
     // Collect form values
-    const bookingData = {
-      profileId: profile.id,
-      serviceId: selectedService?.id,
-      firstName,
-      lastName,
-      phone,
-      email,
-      appointmentDate: selectedDate?.toISOString(),
-    };
-
-    console.log('Submitting booking:', bookingData);
-
-    // TODO: Call Supabase or your backend API to save the booking
-    // e.g. await supabase.from('bookings').insert([bookingData]);
-
+    const bookingData = handleConfirmBooking()
     setIsOpen(false);
     setStep(1);
   }}

@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/x-server";
+import { createClient } from "@/utils/supabase/server";
 import ProfileForm from "@/components/forms/ProfileForm";
 export default async function Profile() {
 const supabase = await createClient();
