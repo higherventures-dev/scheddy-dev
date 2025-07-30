@@ -1,5 +1,5 @@
 import { createClient } from "@/utils/supabase/client"; // adjust to your supabase helper path
-import { Profile } from "@/types"; // if you have a Profile type defined
+import { Profile } from "@/lib/types/profile"; // if you have a Profile type defined
 
 export async function getProfileBySlug(slug: string): Promise<Profile | null> {
   const supabase = createClient();
