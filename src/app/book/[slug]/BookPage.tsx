@@ -11,14 +11,7 @@ import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
 import DatePicker from '@/components/ui/DatePicker';
 
-
-//const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-// const [firstName, setFirstName] = useState('');
-// const [lastName, setLastName] = useState('');
-// const [phone, setPhone] = useState('');
-// const [email, setEmail] = useState('');
-
-async function handleConfirmBooking() {
+//async function handleConfirmBooking() {
 
   //  const bookingData = {
   //     first_name: firstName,
@@ -36,7 +29,7 @@ async function handleConfirmBooking() {
 
   //console.log('Booking created:', data);
   // Show success state or navigate to confirmation page
-}
+//}
 
 // Step Components
 function Step1({
@@ -183,6 +176,11 @@ export default function BookPage({ slug }: { slug: string }) {
   const [services, setServices] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<any>(null);
 
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+const [firstName, setFirstName] = useState('');
+const [lastName, setLastName] = useState('');
+const [phone, setPhone] = useState('');
+const [email, setEmail] = useState('');
 
   useEffect(() => {
     async function fetchProfile() {
@@ -337,8 +335,20 @@ export default function BookPage({ slug }: { slug: string }) {
                 />
               )}
               {step === 2 && <Step2 />}
-              {step === 3 && <Step3 />}
-              {step === 4 && <Step4 />}
+              {step === 3 && <Step3
+    selectedDate={selectedDate}
+    setSelectedDate={setSelectedDate}
+  />}
+              {step === 4 && <Step4
+    firstName={firstName}
+    setFirstName={setFirstName}
+    lastName={lastName}
+    setLastName={setLastName}
+    phone={phone}
+    setPhone={setPhone}
+    email={email}
+    setEmail={setEmail}
+  />}
               {/* {step === 5 && <Step5 />} */}
             </div>
 
@@ -369,7 +379,6 @@ export default function BookPage({ slug }: { slug: string }) {
                 <button
   onClick={async () => {
     // Collect form values
-    const bookingData = handleConfirmBooking()
     setIsOpen(false);
     setStep(1);
   }}
