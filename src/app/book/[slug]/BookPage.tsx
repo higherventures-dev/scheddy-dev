@@ -10,24 +10,22 @@ import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
 import DatePicker from '@/components/ui/DatePicker';
-import { createClient } from '@/utils/supabase/server'
 
-const supabase = createClient();
 
 //const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-const [firstName, setFirstName] = useState('');
-const [lastName, setLastName] = useState('');
-const [phone, setPhone] = useState('');
-const [email, setEmail] = useState('');
+// const [firstName, setFirstName] = useState('');
+// const [lastName, setLastName] = useState('');
+// const [phone, setPhone] = useState('');
+// const [email, setEmail] = useState('');
 
 async function handleConfirmBooking() {
 
-   const bookingData = {
-      first_name: firstName,
-      last_name: lastName,
-      phone: phone,
-      email: email
-    };
+  //  const bookingData = {
+  //     first_name: firstName,
+  //     last_name: lastName,
+  //     phone: phone,
+  //     email: email
+  //   };
   //const { error, data } = await supabase.from('bookings').insert([bookingData]);
 
   // if (error) {
@@ -36,7 +34,7 @@ async function handleConfirmBooking() {
   //   return;
   // }
 
-  console.log('Booking created:', data);
+  //console.log('Booking created:', data);
   // Show success state or navigate to confirmation page
 }
 
