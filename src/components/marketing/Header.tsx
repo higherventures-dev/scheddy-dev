@@ -9,7 +9,7 @@ export default function Header() {
         <div className="w-full flex justify-between items-center p-3 px-32 text-sm">
             <div className="flex flex-col p-5 flex">
             <Link href="/">
-                <Image src="/logo.svg" alt="Scheddy" width={25} height={8} /> 
+                <Image src="/assets/images/logo.svg" alt="Scheddy" width={25} height={8} /> 
             </Link>
             </div>
             <div className="flex gap-5 items-center font-semibold">

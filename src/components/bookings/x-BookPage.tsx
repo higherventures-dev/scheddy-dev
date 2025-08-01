@@ -3,33 +3,12 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import Image from 'next/image';
-import { getProfileBySlug } from '@/lib/actions/getProfileBySlug';
-import { getServicesByProfile } from '@/lib/actions/getServicesByProfile';
-import TimePicker from 'react-time-picker';
+import { createBooking } from '@/features/bookings/services/createBookingService';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
 import DatePicker from '@/components/ui/DatePicker';
 
-//async function handleConfirmBooking() {
-
-  //  const bookingData = {
-  //     first_name: firstName,
-  //     last_name: lastName,
-  //     phone: phone,
-  //     email: email
-  //   };
-  //const { error, data } = await supabase.from('bookings').insert([bookingData]);
-
-  // if (error) {
-  //   console.error('Error creating booking:', error.message);
-  //   // Show error to user
-  //   return;
-  // }
-
-  //console.log('Booking created:', data);
-  // Show success state or navigate to confirmation page
-//}
 
 // Step Components
 function Step1({
@@ -41,9 +20,9 @@ function Step1({
   selectedService: any;
   setSelectedService: (service: any) => void;
 }) {
-console.log("Selected Service", selectedService)
-useEffect(() => {
-  }, [services, selectedService]);
+  console.log('Selected Service', selectedService);
+
+  useEffect(() => {}, [services, selectedService]);
 
   if (!selectedService || selectedService.length === 0) {
     return <p className="text-xs text-gray-400">No service selected.</p>;
@@ -53,7 +32,10 @@ useEffect(() => {
     <div>
       <p className="text-lg text-white text-bold pb-1">{selectedService.name}</p>
       <p className="text-xs text-gray-400 pb-2">{selectedService.description}</p>
-      <p className="text-xs text-gray-400">{selectedService.price ? `$${selectedService.price}` : '$125'} – {convertMinutesToHours(selectedService.duration) || '45 min'}</p>
+      <p className="text-xs text-gray-400">
+        {selectedService.price ? `$${selectedService.price}` : '$125'} –{' '}
+        {convertMinutesToHours(selectedService.duration) || '45 min'}
+      </p>
     </div>
   );
 }
@@ -68,16 +50,20 @@ function convertMinutesToHours(minutes: number): string {
 }
 
 function Step2() {
-  return <div className="text-xs flex">
-    <Image
-            src={'/assets/images/anyone.png'}
-            alt="Austin Clark"
-            width="30"
-            height="30"
-            className="object-cover rounded-md"
-          />
-    <span className="pt-1 pl-3">Austin Clark</span></div>;
+  return (
+    <div className="text-xs flex">
+      <Image
+        src={'/assets/images/anyone.png'}
+        alt="Austin Clark"
+        width="30"
+        height="30"
+        className="object-cover rounded-md"
+      />
+      <span className="pt-1 pl-3">Austin Clark</span>
+    </div>
+  );
 }
+
 function Step3({
   selectedDate,
   setSelectedDate,
@@ -86,12 +72,13 @@ function Step3({
   setSelectedDate: (date: Date | null) => void;
 }) {
   return (
-    <div><div  className="mb-3">
-      <DatePicker value={selectedDate} onChange={setSelectedDate} />
-    </div>
     <div>
-      <ListTimePicker />
-    </div>
+      <div className="mb-3">
+        <DatePicker value={selectedDate} onChange={setSelectedDate} />
+      </div>
+      <div>
+        <ListTimePicker />
+      </div>
     </div>
   );
 }
@@ -101,19 +88,23 @@ function Step4({
   setFirstName,
   lastName,
   setLastName,
-  phone,
-  setPhone,
-  email,
-  setEmail,
+  phoneNumber,
+  setPhoneNumber,
+  emailAddress,
+  setEmailAddress,
+  notes,
+  setNotes,
 }: {
   firstName: string;
   setFirstName: (val: string) => void;
   lastName: string;
   setLastName: (val: string) => void;
-  phone: string;
-  setPhone: (val: string) => void;
-  email: string;
-  setEmail: (val: string) => void;
+  phoneNumber: string;
+  setPhoneNumber: (val: string) => void;
+  emailAddress: string;
+  setEmailAddress: (val: string) => void;
+  notes: string;
+  setNotes: (val: string) => void;
 }) {
   return (
     <div className="text-[70%]">
@@ -147,8 +138,8 @@ function Step4({
           <div className="p-1">Phone number</div>
           <input
             type="text"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
             className="w-full border p-2 rounded"
           />
         </div>
@@ -156,8 +147,16 @@ function Step4({
           <div className="p-1">Email</div>
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            className="w-full border p-2 rounded"
+          />
+        </div>
+        <div>
+          <div className="p-1">Notes</div>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             className="w-full border p-2 rounded"
           />
         </div>
@@ -165,52 +164,13 @@ function Step4({
     </div>
   );
 }
-// function Step5() {
-//   return <div className="text-xs">Review your choices and confirm your booking.</div>;
-// }
 
-export default function BookPage({ slug }: { slug: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState(1);
-  const [profile, setProfile] = useState<any>(null);
-  const [services, setServices] = useState<any>(null);
-  const [selectedService, setSelectedService] = useState<any>(null);
+export default function BookPage({ profile, services }: { profile: any; services: any[] }) {
+  if (!profile) {
+    return <div className="text-center text-sm p-10">No profile found.</div>;
+  }
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-const [firstName, setFirstName] = useState('');
-const [lastName, setLastName] = useState('');
-const [phone, setPhone] = useState('');
-const [email, setEmail] = useState('');
-
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-      const profile = await getProfileBySlug(slug);
-      if (!profile) return;
-      console.log("Profile: ", profile)
-      setProfile(profile);
-
-      const services = await getServicesByProfile(profile.id); // or profile.profile_id depending on your schema
-      if (services) {
-        console.log("Services: ", services)
-        setServices(services);
-      }
-    } catch (error) {
-      console.error('Error fetching profile and services:', error);
-    }
-    }
-    fetchProfile();
-  }, [slug]);
-
-  const steps = [
-    { id: 1, title: 'Service' },
-    { id: 2, title: 'Artist' },
-    { id: 3, title: 'Day & Time' },
-    { id: 4, title: 'Confirm' },
-    // { id: 5, title: 'Confirm' },
-  ];
-
-  const formatAddress = (profile) => {
+  const formatAddress = (profile: any) => {
     const { address, address2, city, state, postal_code } = profile;
 
     if (!address) return 'No address provided';
@@ -226,17 +186,57 @@ const [email, setEmail] = useState('');
     return (
       <>
         {line1}
+        <br />
         {line2}
       </>
     );
   };
 
-  if (!profile) {
-    return <div className="text-center text-sm p-10">Loading profile...</div>;
-  }
+  const steps = [
+    { id: 1, title: 'Service' },
+    { id: 2, title: 'Artist' },
+    { id: 3, title: 'Day & Time' },
+    { id: 4, title: 'Confirm' },
+  ];
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [step, setStep] = useState(1);
+
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const handleConfirmBooking = async () => {
+    const bookingData = {
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: phoneNumber,
+      email_address: emailAddress,
+      notes: notes,
+      service_id: selectedService.id,
+      title: selectedService.name,
+      price: selectedService.price,
+      status: 1,
+      studio_id: profile.id,
+      artist_id: profile.id,
+      client_id: profile.id,
+      user_id: profile.id,
+    };
+    console.log('Booking Data:', bookingData);
+    
+    const insertedBooking = await createBooking(bookingData);
+
+    alert('Booking saved successfully!');
+
+    return;
+  };
 
   return (
-    
     <div>
       <div className="border-b border-[#313131] mt-2 text-center text-xs p-3">
         {profile.studio_name || profile.full_name || profile.display_name}
@@ -246,7 +246,7 @@ const [email, setEmail] = useState('');
         <div className="w-full">
           <h1 className="text-2xl font-bold py-1">{profile.full_name || profile.display_name}</h1>
           <div className="text-xs text-gray-500 max-w-full pb-3">
-            {formatAddress(profile) || 'No address provided'}
+            {formatAddress(profile)}
           </div>
         </div>
 
@@ -275,8 +275,7 @@ const [email, setEmail] = useState('');
                   <div className="text-right">
                     <button
                       onClick={() => {
-                        console.log("SELECTED SERVICE", service);
-                        setSelectedService(service); // reset selection on modal open
+                        setSelectedService(service);
                         setStep(1);
                         setIsOpen(true);
                       }}
@@ -335,21 +334,26 @@ const [email, setEmail] = useState('');
                 />
               )}
               {step === 2 && <Step2 />}
-              {step === 3 && <Step3
-    selectedDate={selectedDate}
-    setSelectedDate={setSelectedDate}
-  />}
-              {step === 4 && <Step4
-    firstName={firstName}
-    setFirstName={setFirstName}
-    lastName={lastName}
-    setLastName={setLastName}
-    phone={phone}
-    setPhone={setPhone}
-    email={email}
-    setEmail={setEmail}
-  />}
-              {/* {step === 5 && <Step5 />} */}
+              {step === 3 && (
+                <Step3
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                />
+              )}
+              {step === 4 && (
+                <Step4
+                  firstName={firstName}
+                  setFirstName={setFirstName}
+                  lastName={lastName}
+                  setLastName={setLastName}
+                  phoneNumber={phoneNumber}
+                  setPhoneNumber={setPhoneNumber}
+                  emailAddress={emailAddress}
+                  setEmailAddress={setEmailAddress}
+                  notes={notes}
+                  setNotes={setNotes}
+                />
+              )}
             </div>
 
             <div className="flex justify-between mt-6 p-6">
@@ -377,15 +381,15 @@ const [email, setEmail] = useState('');
                 </button>
               ) : (
                 <button
-  onClick={async () => {
-    // Collect form values
-    setIsOpen(false);
-    setStep(1);
-  }}
-  className="bg-white text-black px-4 py-2 rounded-md text-xs"
->
-  Confirm Booking
-</button>
+                  onClick={async () => {
+                    await handleConfirmBooking();
+                    setIsOpen(false);
+                    setStep(1);
+                  }}
+                  className="bg-white text-black px-4 py-2 rounded-md text-xs"
+                >
+                  Confirm Booking
+                </button>
               )}
             </div>
           </Dialog.Panel>

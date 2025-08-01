@@ -1,9 +1,7 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/utils/supabase/server'
 
 export async function getUserIdFromSession() {
-  const supabase = createServerComponentClient({ cookies })
-
+ const supabase = await createClient()
   const {
     data: { user },
     error,

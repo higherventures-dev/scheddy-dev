@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
-import Header from '@/components/header-auth-client';
+import Header from '@/components/HeaderAuthClient';
 import Footer from '@/components/dashboard/footer';
 import SideBar from '@/ui/dashboard/sidebar';
 import ArtistSideBar from '@/ui/dashboard/artist-sidebar';

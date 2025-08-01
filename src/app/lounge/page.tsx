@@ -1,28 +1,31 @@
 // app/lounge/page.tsx
-import { getUserIdFromSession } from '@/features/users/services/getUserIdFromSession'
-import { getUserProfile } from '@/features/users/services/getUserProfile'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/utils/supabase/server'
 import { getBookingsForUserService } from '@/features/bookings/services/getBookingsForUserService'
 import BookingsGrid from '@/components/bookings/BookingsGrid'
 
+
 export default async function LoungePage() {
 
+
     // Get user info from the session
-    const userId = await getUserIdFromSession()
-    if (!userId) {
-        // Redirect to login or show error
-        throw new Error('User not authenticated')
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.getUser()
+    if (error || !data?.user) {
+        redirect('/login')
     }
 
+    console.log("User Id", data.user.id )
+
     //get user profile
-    console.log('lounge call with userId:', userId)
-    //const user = await getUserProfile(userId)
+    //const profile = await getUserProfile(data.user.id)
 
     //get user bookings
-    const bookings = await getBookingsForUserService(userId)
+    const bookings = await getBookingsForUserService(data.user.id, data.user.email)
 
      return (
         <main className="p-6">
-        {/* <h1 className="text-2xl font-bold mb-4">Welcome back, {user.firstName}!</h1> */}
+        {/* <h1 className="text-2xl font-bold mb-4">Welcome back, {profile.first_name}!</h1> */}
         <BookingsGrid bookings={bookings} />
         </main>
     )

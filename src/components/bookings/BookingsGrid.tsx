@@ -1,5 +1,7 @@
 import type { Booking } from '@/lib/types/booking'
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from "@/components/ui/button";
 import { getDurationDisplay } from '@/lib/utils/getDurationDisplay'
 import { getBookingStatusImage } from '@/lib/utils/getBookingStatusImage'
 import { string } from 'zod';
@@ -111,5 +113,6 @@ const formattedStatus = getStatusText(b.status);
         )
       })}
     </div>
+    
   )
 }

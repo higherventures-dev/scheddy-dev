@@ -1,6 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+interface ListTimePickerProps {
+  value: string | null;
+  onChange: (value: string) => void;
+  interval?: number;
+}
 
 const generateTimeOptions = (interval = 30) => {
   const times = [];
@@ -16,16 +20,15 @@ const generateTimeOptions = (interval = 30) => {
   return times;
 };
 
-export default function ListTimePicker() {
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const timeOptions = generateTimeOptions(30); // You can adjust the interval here
+export default function ListTimePicker({ value, onChange, interval = 30 }: ListTimePickerProps) {
+  const timeOptions = generateTimeOptions(interval);
 
   return (
     <div className="text-white text-xs">
       <label className="block mb-1">Select a time:</label>
       <select
-        value={selectedTime || ''}
-        onChange={(e) => setSelectedTime(e.target.value)}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
         className="block w-full bg-gray-800 border border-gray-600 rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
       >
         <option value="" disabled>
