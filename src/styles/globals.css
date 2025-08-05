@@ -68,3 +68,176 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* CALENDAR STYLING */
+@layer utilities {
+
+  @layer utilities {
+  .scheddy-calendar .rbc-row,
+  .scheddy-calendar .rbc-month-view,
+  .scheddy-calendar .rbc-month-header,
+  .scheddy-calendar .rbc-row-content,
+  .scheddy-calendar .rbc-date-cell,
+  .scheddy-calendar .rbc-day-slot .rbc-time-slot,
+  .scheddy-calendar .rbc-time-view .rbc-allday-cell,
+  .scheddy-calendar .rbc-time-view .rbc-time-header-content,
+  .scheddy-calendar .rbc-time-content > * > *,
+  .scheddy-calendar .rbc-toolbar,
+  .scheddy-calendar .rbc-header,
+  .scheddy-calendar .rbc-btn-group,
+  .scheddy-calendar .rbc-button-group,
+  .scheddy-calendar .rbc-time-header,
+  .scheddy-calendar .rbc-day-bg,
+  .scheddy-calendar .rbc-event,
+  .scheddy-calendar .rbc-selected,
+  .scheddy-calendar .rbc-off-range,
+  .scheddy-calendar .rbc-off-range-bg {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Remove bottom border below each week row */
+  .scheddy-calendar .rbc-row {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Sometimes month view rows use this */
+  .scheddy-calendar .rbc-month-row {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .scheddy-calendar .rbc-toolbar button {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: inherit; /* or any color you want */
+    @apply text-xs;
+  }
+
+   .scheddy-calendar .rbc-toolbar-label {
+    @apply text-xs;
+  }
+
+  .scheddy-calendar .rbc-month-row + .rbc-month-row{
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+   /* Remove bottom borders from row segments (week rows) */
+  .scheddy-calendar .rbc-row-segment,
+  .scheddy-calendar .rbc-month-row {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+ .scheddy-calendar .rbc-day-bg {
+    border-bottom: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .scheddy-calendar .rbc-month-row {
+  border-bottom: 1px solid red; /* Change 'red' to your desired color */
+ }
+
+ .scheddy-calendar .rbc-time-view{
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+ }
+
+ .scheddy-calendar .rbc-time-content{
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    @apply text-[90%] !important;
+    color: #808080 !important;
+ }
+
+ .sheddy-calendar .rbc-button-link{
+  color: #808080 !important;
+ }
+
+  .sheddy-calendar .rbc-header{
+  color: #808080 !important;
+ }
+
+ /* Highlight today's column background */
+.scheddy-calendar .rbc-day-slot.rbc-today {
+  background-color: rgba(128, 128, 128, 0.1); /* light orange tint */
+}
+
+.scheddy-calendar .rbc-header.rbc-today {
+  background-color: rgba(128, 128, 128, 0.5);
+  font-weight: bold;
+}
+
+/* Increase the width of each column in week view */
+.scheddy-calendar .rbc-time-content > * {
+  min-width: 180px !important; /* default is usually ~100px */
+}
+
+
+.scheddy-calendar .rbc-toolbar button{
+  margin-right: 8px !important;
+}
+
+.scheddy-calendar .rbc-toolbar-label{
+  margin: -1% 0 0 0 !important;
+  padding: 0 !important;
+  font-size: 110% !important;
+  font-weight: bold !important;
+}
+.scheddy-calendar .rbc-btn-group{
+  @apply pb-8;
+}
+.scheddy-calendar .rbc-btn-group button{
+   background-color: rgba(128, 128, 128, 0.1) !important;
+   @apply rounded-md p-2 text-white space-x-4 !important;
+
+}
+
+.scheddy-calendar .rbc-button-link{
+   @apply text-[#808080] !important;
+
+}
+
+/* Reduce width of the time gutter */
+.scheddy-calendar .rbc-time-gutter {
+  width: 72px !important; /* default is ~60-80px */
+  min-width: 72px !important;
+  max-width: 72px !important;
+  padding: 0 !important;
+}
+
+/* Target the month view table */
+.scheddy-calendar .rbc-month-view table {
+  border-collapse: collapse !important;
+  border: 1px solid #4a4a4a !important;
+}
+
+/* Dark gray vertical and horizontal grid lines */
+.scheddy-calendar .rbc-month-view table td,
+.scheddy-calendar .rbc-month-view table th {
+  border: 1px solid #4a4a4a !important; /* dark gray lines */
+}
+
+/* Optional: make header text a bit lighter */
+.scheddy-calendar .rbc-month-view table th {
+  color: #ccc !important;
+  background-color: #222 !important;
+}
+
+/* Optional: background color for days */
+.scheddy-calendar .rbc-month-view table td {
+  background-color: #1a1a1a !important;
+  color: #eee !important;
+}
+
+}
+}

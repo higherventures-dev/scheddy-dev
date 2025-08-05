@@ -1,5 +1,8 @@
+'use server';
+
 import { createClient } from '@/utils/supabase/client';
-// import { sendBookingConfirmationEmail } from '@/features/bookings/services/sendBookingConfirmationEmail';
+import { sendBookingConfirmationEmail } from '@/features/bookings/services/sendBookingConfirmationEmail';
+import { sendBookingNotificationEmail } from '@/features/bookings/services/sendBookingNotificationEmail';
 
 export async function createBooking(data: {
   first_name: string;
@@ -17,9 +20,8 @@ export async function createBooking(data: {
   user_id?: string;
   selected_date?: string;
   selected_time?: string;
-  start_time?: string;
-  end_time?: string;
 }) {
+  
   const supabase = await createClient();
 
   // Step 1: Check if user exists
@@ -32,25 +34,45 @@ export async function createBooking(data: {
   let client_id = data.client_id;
   let user_id = data.user_id;
 
-  const DEFAULT_DURATION_MINUTES = 60;
+  const DEFAULT_DURATION_MINUTES = 60; // or whatever you use
 
-// Initialize start_time and end_time
-let start_time: Date | null = null;
-let end_time: Date | null = null;
+const dateString = "2025-08-16T07:00:00.000Z"; // your full date string
+const timeString = "02:00 PM"; // your time string
 
-// Make sure selectedDate and selectedTime are provided
-if (data.selected_date && data.selected_time) {
-  // Combine into full ISO string and create Date object
-  const combinedStart = new Date(`${data.selected_date}T${data.selected_time}`);
+// 1. Extract YYYY-MM-DD from date
+const selectedDate = new Date(dateString).toISOString().split("T")[0]; // "2025-08-16"
 
-  start_time = combinedStart;
+// 2. Convert 12-hour time to 24-hour
+function convertTo24Hour(time12h) {
+  const [time, modifier] = time12h.split(" ");
+  let [hours, minutes] = time.split(":");
 
-  // Add default duration to compute end_time
-  end_time = new Date(combinedStart.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
-} else {
-  throw new Error("Missing selectedDate or selectedTime");
+  if (hours === "12") {
+    hours = "00";
+  }
+
+  if (modifier === "PM") {
+    hours = String(parseInt(hours, 10) + 12);
+  }
+
+  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:00`;
 }
 
+const selectedTime24 = convertTo24Hour(timeString); // "14:00:00"
+
+// 3. Combine into valid ISO datetime
+const combinedStart = new Date(`${selectedDate}T${selectedTime24}`);
+
+if (isNaN(combinedStart)) {
+  throw new Error("Invalid start time");
+}
+
+const start_time = combinedStart;
+const end_time = new Date(start_time.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
+
+console.log({ start_time, end_time });
+  
+  // Uncomment this block if you want to send OTP if user doesn't exist
   // if (!existingUsers || existingUsers.length === 0 || userLookupError) {
   //   const { error: magicLinkError } = await supabase.auth.signInWithOtp({
   //     email: data.email_address,
@@ -63,21 +85,6 @@ if (data.selected_date && data.selected_time) {
   // } else {
   //   user_id = existingUsers[0].id;
   // }
-
-  // // Step 2: Fetch artist profile to get email
-  // const { data: artistData, error: artistError } = await supabase
-  //   .from('users') // or 'artists' if separate
-  //   .select('first_name, last_name, email')
-  //   .eq('id', data.artist_id)
-  //   .single();
-
-  // if (artistError) {
-  //   console.error('Error fetching artist info:', artistError);
-  //   throw artistError;
-  // }
-
-  // const artistEmail = artistData?.email;
-  // const artistName = `${artistData?.first_name} ${artistData?.last_name}`;
 
   // Step 3: Insert booking
   const { data: inserted, error: insertError } = await supabase
@@ -96,85 +103,34 @@ if (data.selected_date && data.selected_time) {
       artist_id: data.artist_id,
       client_id: client_id ?? null,
       user_id: user_id ?? null,
-      start_time: start_time,
-      end_time: end_time
-    }]);
+      start_time,
+      end_time
+    }])
+    .select(); // ensure it returns inserted row(s)
 
   if (insertError) {
     console.error('Supabase Insert Error:', insertError.message, insertError.details);
     throw insertError;
   }
 
-  //const booking = inserted[0];
+  const booking = inserted[0];
 
-  // // Step 4: Send confirmation email to client
-  // await sendBookingConfirmationEmail(data.email_address, {
-  //   title: data.title,
-  //   price: data.price,
-  //   artistName: artistName,
-  // });
+  // Step 4: Send confirmation email to client
+  await sendBookingConfirmationEmail(data.email_address, data.title, booking);
 
-  // // Optionally, also send to the artist
-  // if (artistEmail) {
-  //   await sendBookingConfirmationEmail(artistEmail, {
-  //     title: data.title,
-  //     price: data.price,
-  //     artistName: `${data.first_name} ${data.last_name}`, // reversed for artist's view
-  //   });
-  // }
+  // // Step 5. Send confirmation email to artist
+  // const { data: existingArtist, error } = await supabase
+  // .from('users')
+  // .select('email')
+  // .eq('id', data.artist_id);
+  //   const { data: existingUsers, error: userLookupError } = await supabase
+  //   .from('users')
+  //   .select('id')
+  //   .eq('email', data.email_address)
+  //   .limit(1);\
+  // console.log("Artist", data.artist_id);
+  // console.log("The Artist", existingArtist);
 
+  // await sendBookingNotificationEmail(existingArtist.email, data.title, booking);
   return inserted;
 }
-
-
-
-
-// // src/services/createBookingService.ts
-// import { createClient } from '@/utils/supabase/client'
-
-
-// // Insert booking data into Supabase
-// export async function createBooking(data: {
-//   first_name: string;
-//   last_name: string;
-//   phone_number: string;
-//   email_address: string;
-//   notes: string;
-//   service_id: string;
-//   title: string;
-//   price: number;
-//   status: number;
-//   studio_id: string;
-//   artist_id: string;
-//   client_id: string;
-//   user_id: string;
-// }) {
-//   const supabase = await createClient(); // await here to get the client instance
-
-  
-//   const { data: inserted, error } = await supabase
-//     .from('bookings')
-//     .insert([
-//       {
-//         first_name: data.first_name,
-//         last_name: data.last_name,
-//         phone_number: data.phone_number,
-//         email_address: data.email_address,
-//         notes: data.notes,
-//         service_id: data.service_id,
-//         title: data.title,
-//         price: data.price,
-//         status: data.status,
-//         studio_id: data.studio_id,
-//         artist_id: data.artist_id,
-//         client_id: data.client_id,
-//         user_id: data.user_id,
-//       },
-//     ]);
-
-//   if (error) {
-//   console.error('Supabase Insert Error:', error.message, error.details);
-//   throw error;
-// }
-//   return inserted;
-// }

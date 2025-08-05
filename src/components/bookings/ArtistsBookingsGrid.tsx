@@ -10,13 +10,13 @@ export default function ArtistsBookingsGrid({ bookings }: { bookings: Booking[] 
 
   function getStatusText(status: number): string {
     switch (status) {
-      case 0:
+      case -1:
         return "Canceled";
-      case 1:
+      case 0:
         return "Unconfirmed";
-      case 2:
+      case 1:
         return "Confirmed";
-      case 3:
+      case 2:
         return "Completed";
       default:
         return "Unknown";
@@ -53,45 +53,29 @@ export default function ArtistsBookingsGrid({ bookings }: { bookings: Booking[] 
         const formattedStatus = getStatusText(b.status);
         const artistName = b.artist ? `${b.artist.first_name} ${b.artist.last_name}` : '';
 
-        return (
-          <div key={b.id}>
-            {/* Optionally: you could group by month here */}
-            {/* <h2 className="text-sm">{monthAbbr}</h2> */}
-
-            <div className="bg-[#3A3A3A] p-1 rounded">
+        return (    
+            <div className="border p-2 shadow-sm hover:shadow-md transition">
               <div className="grid grid-cols-6 gap-1">
-                <div className="col-span-1 p-4">
-                  {monthAbbr}<br />{dayOfMonth}
+                <div>
+                  #{b.id}
                 </div>
-                <div className="col-span-3 p-4">
-                  {formattedLongDateWithDay}<br />
-                  <span className="text-[#808080]">{formattedStartTime} - {formattedEndTime}</span>
-                </div>
-                <div className="col-span-2 p-4 flex items-center gap-1">
-                  <Image
-                    src={getBookingStatusImage(b.status)}
-                    alt={formattedStatus}
-                    width={16}
-                    height={16}
-                  />
+                <div>
                   {formattedStatus}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-6 gap-1">
-                <div className="col-span-1 p-4" />
-                <div className="col-span-3 p-4">
-                  {b.title}<br />
-                  <span className="text-[#808080]">
-                    {bookingDurationDisplay} - {artistName}
-                  </span>
+                <div>
+                  {formattedLongDateWithDay}<br />
                 </div>
-                <div className="col-span-2 p-4">
+                <div>
+                  CLIENT
+                </div>
+                <div>
                   ${b.price?.toFixed(2) ?? '0.00'}
+                </div>
+                <div>
+                  ...
                 </div>
               </div>
             </div>
-          </div>
         )
       })}
     </div>
