@@ -1,66 +1,115 @@
 'use client';
 
-import { Booking } from '../BookingTable';
+import { useEffect, useState } from 'react';
 import { getDurationDisplay } from '@/lib/utils/getDurationDisplay';
+import { updateBookingStatus } from '@/features/bookings/services/updateBookingStatus';
+import { getBookingById } from '@/features/bookings/services/getBookingById';
 import clsx from 'clsx';
-import { CheckCircle } from 'lucide-react';
-import { XCircle } from 'lucide-react';
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { ClockIcon } from '@heroicons/react/24/outline';
 
 export function ViewBookingForm({
-  initialData,
+  bookingId,
   onClose,
+  onRefresh,
 }: {
-  initialData: Booking;
+  bookingId: string;
   onClose: () => void;
+  onRefresh: () => void;
 }) {
-  
-    const title = initialData?.title ?? '';
-  const first_name = initialData?.first_name ?? '';
-  const last_name = initialData?.last_name ?? '';
-  const artist = initialData?.artist_id ?? '';
-  const dateDisplay = 'August 6, 2025'; // or format from initialData
-  const timeDisplay = '9:00 am - 11:00 am'; // or derive from initialData
-  const status = 'Unconfirmed';
-  const phone_number = initialData?.phone_number ?? '';
-  const email_address = initialData?.email_address ?? '';
-  const notes = initialData?.notes ?? '';
-  const price = initialData?.price ?? '';
-  const startDate = new Date(initialData?.start_time ?? '');
-  const endDate = new Date(initialData?.end_time ?? '');
+  const STATUS_OPTIONS = [
+    { value: -1, label: 'Canceled' },
+    { value: 0, label: 'Unconfirmed' },
+    { value: 1, label: 'Confirmed' },
+    { value: 2, label: 'Completed' },
+    { value: 3, label: 'No-Show' },
+  ];
+
+  const [booking, setBooking] = useState<any>(null);
+  const [selectedStatus, setSelectedStatus] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  // Fetch latest booking on drawer open
+  useEffect(() => {
+
+    const fetchBooking = async () => {
+      const { data, error } = await getBookingById(bookingId);
+      if (data) {
+        setBooking(data);
+        setSelectedStatus(data.status ?? 0);
+      }
+    };
+
+    fetchBooking();
+  }, [bookingId]);
+
+  const handleSave = async () => {
+  setLoading(true);
+  setMessage('');
+
+  try {
+    const res = await updateBookingStatus(bookingId, selectedStatus);
+    if (res?.error) throw new Error(res.error.message);
+
+    setMessage('Status updated successfully!');
+    setBooking((prev: any) => ({ ...prev, status: selectedStatus }));
+
+    // ✅ Close drawer and refresh parent
+    onRefresh();
+    onClose();
+
+  } catch (err: any) {
+    setMessage(err.message || 'Failed to update.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+  if (!booking) return <div className="p-4 text-xs">Loading booking...</div>;
+
+  // Extract values from the current booking
+  const {
+    title = '',
+    first_name = '',
+    last_name = '',
+    artist_id = '',
+    phone_number = '',
+    email_address = '',
+    notes = '',
+    price = '',
+    start_time,
+    end_time,
+  } = booking;
+
+  const startDate = new Date(start_time);
+  const endDate = new Date(end_time);
 
   const formattedLongDateWithDay = startDate.toLocaleDateString('en-US', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 
   const monthAbbr = startDate.toLocaleString('default', { month: 'short' }).toUpperCase();
   const dayOfMonth = startDate.getDate();
 
   const formattedStartTime = startDate.toLocaleTimeString([], {
-  hour: 'numeric',
-  minute: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 
   const formattedEndTime = endDate.toLocaleTimeString([], {
-  hour: 'numeric',
-  minute: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
   });
 
   const bookingDurationDisplay = getDurationDisplay(startDate, endDate);
-        
-
-  
 
   return (
     <div className="text-xs">
       <h2 className="text-xl font-semibold capitalize">{first_name} {last_name}</h2>
-      {/* General Form */}
+
       <div className="space-y-4 p-1 py-4 text-xs">
-        {/* Booking Information */}
         <div className="space-y-2 p-1 py-4 text-xs">
           <div className="bg-[#3A3A3A] p-4 rounded-lg">
             <div className="grid grid-cols-6 gap-1">
@@ -73,10 +122,18 @@ export function ViewBookingForm({
                 <br />
                 <span className="text-[#808080] text-[90%]">{formattedStartTime} - {formattedEndTime}</span>
               </div>
-              <div className="col-span-2 pr-1 text-right flex items-center justify-end">
-                <span className="inline-flex items-center bg-[#344554] rounded-sm px-1">
-                  <span className="text-[90%]">{status}</span>
-                </span>
+              <div className="col-span-2 pr-1 flex items-center justify-end">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(Number(e.target.value))}
+                  className="text-xs border border-gray-300 rounded px-2 py-1 bg-[#344554] text-white"
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -87,7 +144,15 @@ export function ViewBookingForm({
                 <br />
                 <span className="text-[#808080] text-[90%]">{bookingDurationDisplay}</span>
               </div>
-              <div className="col-span-1 pr-3 text-[90%]">{price}</div>
+              <div className="col-span-1 pr-3 text-[90%]">
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -112,7 +177,7 @@ export function ViewBookingForm({
         </div>
         <hr className="border-t border-[color:#3A3A3A]" />
 
-        {/* Booked By */}
+        {/* Client Info */}
         <h2 className="text-sm">Client</h2>
         <div className="grid grid-cols-2">
           <div>
@@ -136,18 +201,10 @@ export function ViewBookingForm({
         </div>
         <hr className="border-t border-[color:#3A3A3A]" />
 
-        {/* Booked By
-        <h2 className="text-sm">Booking Details</h2>
-        <div className="grid grid-cols-2">
-          <div className="col-span-1">Booked By</div>
-          <div className="col-span-1">David S. On Oct 28 at 3:27 PM</div>
-        </div> */}
-
-        {/* Close Button */}
         <div>
           <button
-            onClick={onClose}
             className="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700 text-xs"
+            onClick={onClose}
           >
             Close
           </button>

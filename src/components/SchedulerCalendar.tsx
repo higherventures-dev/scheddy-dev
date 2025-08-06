@@ -116,40 +116,45 @@ export default function SchedulerCalendar() {
     setSelectedBooking(null);
   };
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      const supabase = createClient();
+const fetchBookings = async () => {
+  const supabase = createClient();
 
-      const { data, error } = await supabase.from('bookings').select('*');
+  const { data, error } = await supabase.from('bookings').select('*');
 
-      if (error) {
-        console.error(error);
-        return;
-      }
+  if (error) {
+    console.error(error);
+    return;
+  }
 
-      const mapped = (data || []).map((b: any) => ({
-        id: b.id,
-        title: b.title,
-        start_time: new Date(b.start_time),
-        end_time: new Date(b.end_time),
-        user_id: b.user_id,
-        client_id: b.client_id,
-        status: b.status,
-        description: b.notes || '',
-        first_name: b.first_name,
-        last_name: b.last_name,
-        phone_number: b.phone_number,
-        email_address: b.email_address,
-        notes: b.notes,
-        price: b.price,
-      }));
+  const mapped = (data || []).map((b: any) => ({
+    id: b.id,
+    title: b.title,
+    start_time: new Date(b.start_time),
+    end_time: new Date(b.end_time),
+    user_id: b.user_id,
+    client_id: b.client_id,
+    status: b.status,
+    description: b.notes || '',
+    first_name: b.first_name,
+    last_name: b.last_name,
+    phone_number: b.phone_number,
+    email_address: b.email_address,
+    notes: b.notes,
+    price: b.price,
+  }));
 
-      setEvents(mapped);
-    };
+  setEvents(mapped);
+};
 
-    fetchBookings();
-  }, []);
+useEffect(() => {
+  fetchBookings();
+}, []);
 
+const refreshCalendar = () => {
+  fetchBookings(); // Simply reuse the logic
+};  
+
+  
   return (
     <div className="scheddy-calendar text-xs h-full w-full">
       <Calendar
@@ -236,6 +241,7 @@ export default function SchedulerCalendar() {
         open={drawerOpen}
         initialData={selectedBooking}
         onClose={handleCloseDrawer}
+        onRefresh={refreshCalendar}
         mode={drawerMode}
       />
     </div>

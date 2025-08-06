@@ -13,7 +13,6 @@ const clientSchema = z.object({
   email: z.string().email('Invalid email').optional(),
   phone: z.string().optional(),
 });
-
 interface BookingDrawerProps {
 //   initialData?: Booking;
   onClose: () => void;
@@ -86,7 +85,10 @@ export function BookingDrawer({
             {isDelete && initialData && (
               <DeleteClientForm initialData={initialData} onSubmit={onSubmit} />
             )} */}
-            <ViewBookingForm initialData={initialData} onClose={onClose} />
+            {/* <ViewBookingForm initialData={initialData} onClose={onClose} /> */}
+            {initialData?.id && (
+                <ViewBookingForm bookingId={initialData.id} />
+            )}
           </div>
         </div>
       </div>
