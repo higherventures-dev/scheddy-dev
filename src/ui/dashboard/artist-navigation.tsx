@@ -17,7 +17,7 @@ const links = [
   { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
   { name: 'Clients', href: '/dashboard/clients', icon: UserGroupIcon },
   { name: 'Services', href: '/dashboard/services', icon: UserGroupIcon },
-  { name: 'Bookings', href: '/dashboard/sales', icon: TagIcon },
+  { name: 'Sales', href: '/dashboard/sales', icon: TagIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];

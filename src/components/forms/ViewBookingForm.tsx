@@ -1,6 +1,7 @@
 'use client';
 
 import { Booking } from '../BookingTable';
+import { getDurationDisplay } from '@/lib/utils/getDurationDisplay';
 import clsx from 'clsx';
 import { CheckCircle } from 'lucide-react';
 import { XCircle } from 'lucide-react';
@@ -14,16 +15,49 @@ export function ViewBookingForm({
   initialData: Booking;
   onClose: () => void;
 }) {
-  // Example: derive display values from initialData; replace with real fields
-  const title = '[TITLE]';
-const artist = '[ ARTIST ]';
-   const dateDisplay = 'August 6, 2025'; // or format from initialData
+  
+    const title = initialData?.title ?? '';
+  const first_name = initialData?.first_name ?? '';
+  const last_name = initialData?.last_name ?? '';
+  const artist = initialData?.artist_id ?? '';
+  const dateDisplay = 'August 6, 2025'; // or format from initialData
   const timeDisplay = '9:00 am - 11:00 am'; // or derive from initialData
-const status = 'Unconfirmed';
-const price = '120';
+  const status = 'Unconfirmed';
+  const phone_number = initialData?.phone_number ?? '';
+  const email_address = initialData?.email_address ?? '';
+  const notes = initialData?.notes ?? '';
+  const price = initialData?.price ?? '';
+  const startDate = new Date(initialData?.start_time ?? '');
+  const endDate = new Date(initialData?.end_time ?? '');
+
+  const formattedLongDateWithDay = startDate.toLocaleDateString('en-US', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  });
+
+  const monthAbbr = startDate.toLocaleString('default', { month: 'short' }).toUpperCase();
+  const dayOfMonth = startDate.getDate();
+
+  const formattedStartTime = startDate.toLocaleTimeString([], {
+  hour: 'numeric',
+  minute: '2-digit',
+  });
+
+  const formattedEndTime = endDate.toLocaleTimeString([], {
+  hour: 'numeric',
+  minute: '2-digit',
+  });
+
+  const bookingDurationDisplay = getDurationDisplay(startDate, endDate);
+        
+
+  
 
   return (
     <div className="text-xs">
+      <h2 className="text-xl font-semibold capitalize">{first_name} {last_name}</h2>
       {/* General Form */}
       <div className="space-y-4 p-1 py-4 text-xs">
         {/* Booking Information */}
@@ -31,13 +65,13 @@ const price = '120';
           <div className="bg-[#3A3A3A] p-4 rounded-lg">
             <div className="grid grid-cols-6 gap-1">
               <div className="col-span-1 rounded border border-gray-600">
-                <div className="bg-gray-600 text-[70%] text-center">AUG</div>
-                <div className="text-center text-[100%] pt-2 pb-2">06</div>
+                <div className="bg-gray-600 text-[70%] text-center">{monthAbbr}</div>
+                <div className="text-center text-[100%] pt-2 pb-2">{dayOfMonth}</div>
               </div>
               <div className="col-span-3 pl-4">
-                {dateDisplay}
+                {formattedLongDateWithDay}
                 <br />
-                <span className="text-[#808080] text-[90%]">{timeDisplay}</span>
+                <span className="text-[#808080] text-[90%]">{formattedStartTime} - {formattedEndTime}</span>
               </div>
               <div className="col-span-2 pr-1 text-right flex items-center justify-end">
                 <span className="inline-flex items-center bg-[#344554] rounded-sm px-1">
@@ -51,7 +85,7 @@ const price = '120';
               <div className="col-span-4 pl-4">
                 {title}
                 <br />
-                <span className="text-[#808080] text-[90%]">{artist}</span>
+                <span className="text-[#808080] text-[90%]">{bookingDurationDisplay}</span>
               </div>
               <div className="col-span-1 pr-3 text-[90%]">{price}</div>
             </div>
@@ -65,7 +99,7 @@ const price = '120';
             <span className="text-[color:#969696]">Total price</span>
           </div>
           <div className="col-span-1 text-right">
-            <span className="text-[color:#969696]">$120.00</span>
+            <span className="text-[color:#969696]">${price}</span>
           </div>
         </div>
         <div className="space-y-2 text-white grid grid-cols-2">
@@ -73,7 +107,7 @@ const price = '120';
             <span className="text-[color:#969696]">Amount owed</span>
           </div>
           <div className="col-span-1 text-right">
-            <span className="text-[color:#969696]">$120.00</span>
+            <span className="text-[color:#969696]">${price}</span>
           </div>
         </div>
         <hr className="border-t border-[color:#3A3A3A]" />
@@ -83,11 +117,11 @@ const price = '120';
         <div className="grid grid-cols-2">
           <div>
             <div className="col-span-1">Phone</div>
-            <div className="col-span-1">999-999-9999</div>
+            <div className="col-span-1">{phone_number}</div>
           </div>
           <div>
             <div>Email</div>
-            <div>client@scheddy.us</div>
+            <div>{email_address}</div>
           </div>
         </div>
 
@@ -97,17 +131,17 @@ const price = '120';
         <h2 className="text-sm">Notes</h2>
         <div className="grid grid-cols-1 gap-4">
           <div>
-            <span className="text-[color:#969696]">[ NOTES ]</span>
+            <span className="text-[color:#969696]">{notes}</span>
           </div>
         </div>
         <hr className="border-t border-[color:#3A3A3A]" />
 
-        {/* Booked By */}
+        {/* Booked By
         <h2 className="text-sm">Booking Details</h2>
         <div className="grid grid-cols-2">
           <div className="col-span-1">Booked By</div>
           <div className="col-span-1">David S. On Oct 28 at 3:27 PM</div>
-        </div>
+        </div> */}
 
         {/* Close Button */}
         <div>

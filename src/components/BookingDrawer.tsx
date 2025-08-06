@@ -33,6 +33,7 @@ export function BookingDrawer({
   const isAdd = mode === 'add';
   const isDelete = mode === 'delete';
 
+  console.log("DATA", initialData)
   return (
     <div
       className={clsx(
@@ -59,12 +60,12 @@ export function BookingDrawer({
         <div className="p-6 overflow-y-auto h-full text-white">
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold capitalize">
+            {/* <h2 className="text-xl font-semibold capitalize">
               {isView && 'View Booking'}
               {isEdit && 'Edit Booking'}
               {isAdd && 'Add Booking'}
               {isDelete && 'Delete Booking'}
-            </h2>
+            </h2> */}
             <button
               onClick={onClose}
               className="text-gray-300 hover:text-white text-lg"

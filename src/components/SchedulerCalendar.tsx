@@ -30,6 +30,11 @@ type BookingEvent = RBCEvent & {
   description?: string;
   start_time?: string | Date;
   end_time?: string | Date;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  email_address?: string;
+  price: number;
 };
 
 function hexToRgba(hex: string, alpha = 1) {
@@ -131,6 +136,12 @@ export default function SchedulerCalendar() {
         client_id: b.client_id,
         status: b.status,
         description: b.notes || '',
+        first_name: b.first_name,
+        last_name: b.last_name,
+        phone_number: b.phone_number,
+        email_address: b.email_address,
+        notes: b.notes,
+        price: b.price,
       }));
 
       setEvents(mapped);
