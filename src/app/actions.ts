@@ -2,53 +2,69 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-
+import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 
 export async function signInAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const credentials = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+  };
+
+  
+  const { data, error } = await supabase.auth.signInWithPassword(credentials);
+  console.log('Auth Response', { data, error});
+  if (error || !data?.user) {
+    console.error('LOGIN FAILED:', {
+      error,
+      email: credentials.email,
+      gotUser: !!data?.user,
+    });
+
+    // TEMP: redirect to valid page with error info
+    return redirect(`/auth/sign-in?error=${encodeURIComponent(error?.message || 'No user')}`);
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword(credentials)
-  console.log("LOGIN ERROR", error)
-
-  // if (error) {
-  //   redirect('/error')
-  // }
-
-  //revalidatePath('/', 'layout')
-  //redirect('/')
-
+  // 🛡️ Guard against undefined user.id
+  const userId = data.user.id;
+  if (!userId) {
+    console.error('User ID missing after login:', data);
+    throw new Error('Missing user ID after login.');
+  }
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', data.user.id)
+    .eq('id', userId)
     .single();
 
-  if (profileError || !profile) {
-    throw new Error('User profile not found or invalid.');
+  if (profileError || !profile?.role) {
+    console.error('PROFILE LOAD FAILED:', {
+      userId,
+      profileError,
+      profile,
+    });
+
+    return redirect('/auth/sign-in?error=Missing+user+role');
   }
 
-  const role = profile.role?.toLowerCase();
+  const role = profile.role.toLowerCase();
+
+  console.log('Redirecting role:', role);
 
   switch (role) {
     case 'client':
-      redirect('/lounge');
+      return redirect('/lounge');
     case 'artist':
-      redirect('/dashboard');
+      return redirect('/dashboard');
     case 'studio':
-      redirect('/studio');
+      return redirect('/studio');
     case 'admin':
-      redirect('/admin');
+      return redirect('/admin');
     default:
-      redirect('/unauthorized');
+      return redirect('/unauthorized'); // ✅ Make sure this route exists
   }
 }
 
