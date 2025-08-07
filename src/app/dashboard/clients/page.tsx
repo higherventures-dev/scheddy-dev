@@ -17,7 +17,7 @@ export default function Page() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'delete' | 'add'>('add');
 
-  const ITEMS_PER_PAGE = 6;
+  const ITEMS_PER_PAGE = 100;
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
 
   // 🔁 Fetch clients based on user role
@@ -42,13 +42,13 @@ export default function Page() {
     }
 
     let query = supabase.from('clients').select('*');
-
+    console.log("Query", query);
     switch (profile.role) {
       case 'admin':
         break;
       case 'studio':
       case 'artist':
-        query = query.eq('created_by', user.id);
+        query = query.eq('artist_id', user.id);
         break;
       default:
         setClients([]);
@@ -163,7 +163,7 @@ export default function Page() {
           />
         ) : (
           <ClientsTable
-            clients={paginated}
+            clients={clients}
             onEdit={(client) => {
               setSelectedClient(client);
               setDrawerMode('edit');

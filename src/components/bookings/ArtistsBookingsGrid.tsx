@@ -25,6 +25,7 @@ export default function ArtistsBookingsGrid({ bookings }: { bookings: Booking[] 
 
   return (
     <div className="space-y-2 p-1 py-4 text-xs">
+        
       {bookings.map((b) => {
         const startDate = new Date(b.start_time);
         const endDate = new Date(b.end_time);

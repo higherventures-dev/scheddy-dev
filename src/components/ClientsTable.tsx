@@ -10,8 +10,8 @@ export type Client = {
   avatar_url?: string;
   first_name: string;
   last_name: string;
-  phone?: string;
-  email?: string;
+  phone_number?: string;
+  email_address?: string;
   created_at?: string;
 };
 
@@ -48,7 +48,7 @@ export function ClientsTable({
             <th className="px-4 py-2 border-b"></th>
             <th className="px-4 py-2 border-b">First name</th>
             <th className="px-4 py-2 border-b">Last name</th>
-            <th className="px-4 py-2 border-b">Phone</th>
+            <th className="px-4 py-2 border-b">Phone number</th>
             <th className="px-4 py-2 border-b">Email address</th>
             <th className="px-4 py-2 border-b"></th>
           </tr>
@@ -66,8 +66,8 @@ export function ClientsTable({
             </td>
               <td className="px-4 py-2 text-white font-medium">{client.first_name}</td>
               <td className="px-4 py-2 text-white font-medium">{client.last_name}</td>
-              <td className="px-4 py-2 text-white">{client.phone || '-'}</td>
-              <td className="px-4 py-2 text-white">{client.email || '-'}</td>
+              <td className="px-4 py-2 text-white">{client.phone_number || '-'}</td>
+              <td className="px-4 py-2 text-white">{client.email_address || '-'}</td>
               <td className="px-4 py-2 text-right space-x-2">
                 {onView && (
                   <button onClick={() => onView(client)} className="text-blue-400 hover:underline text-xs">

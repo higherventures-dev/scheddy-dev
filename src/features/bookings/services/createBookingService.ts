@@ -2,7 +2,7 @@
 
 import { createClient } from '@/utils/supabase/client';
 import { sendBookingConfirmationEmail } from '@/features/bookings/services/sendBookingConfirmationEmail';
-import { sendBookingNotificationEmail } from '@/features/bookings/services/sendBookingNotificationEmail';
+import { createClientService } from '@/features/clients/services/createClientService'; // make sure this name matches the actual export
 
 export async function createBooking(data: {
   first_name: string;
@@ -14,77 +14,59 @@ export async function createBooking(data: {
   title: string;
   price: number;
   status: number;
-  studio_id: string;
+  studio_id?: string;
   artist_id: string;
   client_id?: string;
   user_id?: string;
   selected_date?: string;
   selected_time?: string;
 }) {
-  
   const supabase = await createClient();
 
-  // Step 1: Check if user exists
-  const { data: existingUsers, error: userLookupError } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', data.email_address)
-    .limit(1);
-
+  // Step 1: Get or create client
   let client_id = data.client_id;
-  let user_id = data.user_id;
+  console.log("Logged Client ID", client_id);
 
-  const DEFAULT_DURATION_MINUTES = 60; // or whatever you use
+  if (!client_id || client_id.length === 0) {
+    client_id = await createClientService({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      phone_number: data.phone_number,
+      email_address: data.email_address,
+      artist_id: data.artist_id,
+      studio_id: data.studio_id,
+    });
+    console.log("New Client ID", client_id);
+  }
+ 
+  const user_id = data.user_id ?? null;
 
-const dateString = "2025-08-16T07:00:00.000Z"; // your full date string
-const timeString = "02:00 PM"; // your time string
+  // Step 2: Parse and combine date/time
+  const DEFAULT_DURATION_MINUTES = 60;
+  const dateString = data.selected_date ?? '2025-08-16T07:00:00.000Z';
+  const timeString = data.selected_time ?? '02:00 PM';
 
-// 1. Extract YYYY-MM-DD from date
-const selectedDate = new Date(dateString).toISOString().split("T")[0]; // "2025-08-16"
+  const selectedDate = new Date(dateString).toISOString().split('T')[0];
 
-// 2. Convert 12-hour time to 24-hour
-function convertTo24Hour(time12h) {
-  const [time, modifier] = time12h.split(" ");
-  let [hours, minutes] = time.split(":");
+  function convertTo24Hour(time12h: string): string {
+    const [time, modifier] = time12h.split(' ');
+    let [hours, minutes] = time.split(':');
 
-  if (hours === "12") {
-    hours = "00";
+    if (hours === '12') hours = '00';
+    if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
+
+    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
   }
 
-  if (modifier === "PM") {
-    hours = String(parseInt(hours, 10) + 12);
+  const selectedTime24 = convertTo24Hour(timeString);
+  const combinedStart = new Date(`${selectedDate}T${selectedTime24}`);
+
+  if (isNaN(combinedStart.getTime())) {
+    throw new Error('Invalid start time');
   }
 
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:00`;
-}
-
-const selectedTime24 = convertTo24Hour(timeString); // "14:00:00"
-
-// 3. Combine into valid ISO datetime
-const combinedStart = new Date(`${selectedDate}T${selectedTime24}`);
-
-if (isNaN(combinedStart)) {
-  throw new Error("Invalid start time");
-}
-
-const start_time = combinedStart;
-const end_time = new Date(start_time.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
-
-console.log({ start_time, end_time });
-  
-  // Uncomment this block if you want to send OTP if user doesn't exist
-  // if (!existingUsers || existingUsers.length === 0 || userLookupError) {
-  //   const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-  //     email: data.email_address,
-  //   });
-
-  //   if (magicLinkError) {
-  //     console.error('Magic link sending error:', magicLinkError);
-  //     throw magicLinkError;
-  //   }
-  // } else {
-  //   user_id = existingUsers[0].id;
-  // }
+  const start_time = combinedStart;
+  const end_time = new Date(start_time.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
 
   // Step 3: Insert booking
   const { data: inserted, error: insertError } = await supabase
@@ -101,12 +83,12 @@ console.log({ start_time, end_time });
       status: data.status,
       studio_id: data.studio_id,
       artist_id: data.artist_id,
-      client_id: client_id ?? null,
-      user_id: user_id ?? null,
+      client_id,
+      user_id,
       start_time,
-      end_time
+      end_time,
     }])
-    .select(); // ensure it returns inserted row(s)
+    .select();
 
   if (insertError) {
     console.error('Supabase Insert Error:', insertError.message, insertError.details);
@@ -115,22 +97,8 @@ console.log({ start_time, end_time });
 
   const booking = inserted[0];
 
-  // Step 4: Send confirmation email to client
+  // Step 4: Send confirmation email
   await sendBookingConfirmationEmail(data.email_address, data.title, booking);
 
-  // // Step 5. Send confirmation email to artist
-  // const { data: existingArtist, error } = await supabase
-  // .from('users')
-  // .select('email')
-  // .eq('id', data.artist_id);
-  //   const { data: existingUsers, error: userLookupError } = await supabase
-  //   .from('users')
-  //   .select('id')
-  //   .eq('email', data.email_address)
-  //   .limit(1);\
-  // console.log("Artist", data.artist_id);
-  // console.log("The Artist", existingArtist);
-
-  // await sendBookingNotificationEmail(existingArtist.email, data.title, booking);
   return inserted;
 }

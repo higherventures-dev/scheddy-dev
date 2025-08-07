@@ -1,12 +1,9 @@
 'use client';
 
 import clsx from 'clsx';
-// import { BookingFormData } from './components/ClientsDrawer';
-import { ViewBookingForm } from './forms/ViewBookingForm';
-import { useForm } from 'react-hook-form';
+import { XCircleIcon } from '@heroicons/react/24/outline';
+import { ViewBookingForm } from '@/components/forms/bookings/ViewBookingForm';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Tab } from '@headlessui/react';
 const clientSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
@@ -14,9 +11,9 @@ const clientSchema = z.object({
   phone: z.string().optional(),
 });
 interface BookingDrawerProps {
-//   initialData?: Booking;
+  initialData?: Booking;
   onClose: () => void;
-//   onSubmit: (data: BookingFormData) => void;
+  onSubmit: (data: BookingFormData) => void;
   open: boolean;
   mode?: 'add' | 'edit' | 'view' | 'delete';
 }
@@ -24,6 +21,7 @@ interface BookingDrawerProps {
 export function BookingDrawer({
   initialData,
   onClose,
+  onSubmit,
   open,
   mode = 'add',
 }: BookingDrawerProps) {
@@ -32,7 +30,6 @@ export function BookingDrawer({
   const isAdd = mode === 'add';
   const isDelete = mode === 'delete';
 
-  console.log("DATA", initialData)
   return (
     <div
       className={clsx(
@@ -52,42 +49,27 @@ export function BookingDrawer({
       {/* Slide-in Drawer */}
       <div
         className={clsx(
-          'absolute top-0 right-0 h-full w-full sm:w-[480px] bg-[#313131] shadow-lg transform transition-transform duration-700 ease-in-out',
+          'absolute top-0 right-0 h-full w-full sm:w-[25vw] bg-[#313131] rounded-lg mt-2 shadow-lg transform transition-transform duration-700 ease-in-out',
           open ? 'translate-x-0' : 'translate-x-full'
         )}
       >
-        <div className="p-6 overflow-y-auto h-full text-white">
+        <div className="p-4 overflow-y-auto h-full text-white">
           {/* Header */}
-          <div className="flex justify-between items-center mb-4">
-            {/* <h2 className="text-xl font-semibold capitalize">
-              {isView && 'View Booking'}
-              {isEdit && 'Edit Booking'}
-              {isAdd && 'Add Booking'}
-              {isDelete && 'Delete Booking'}
-            </h2> */}
+          <div className="flex justify-end items-center mb-4">
             <button
               onClick={onClose}
               className="text-gray-300 hover:text-white text-lg"
             >
-              ✕
+              <XCircleIcon className="h-5 mr-2 text-[#969696]" />
             </button>
           </div>
-
-          {/* Conditional Form Rendering */}
           <div>
-            {/* {isAdd && <AddClientForm onSubmit={onSubmit} />}
-            {isEdit && initialData && (
-              <EditClientForm initialData={initialData} onSubmit={onSubmit} />
-            )}
-            {isView && initialData && (
-              <ViewClientForm initialData={initialData} onClose={onClose} />
-            )}
-            {isDelete && initialData && (
-              <DeleteClientForm initialData={initialData} onSubmit={onSubmit} />
-            )} */}
-            {/* <ViewBookingForm initialData={initialData} onClose={onClose} /> */}
             {initialData?.id && (
-                <ViewBookingForm bookingId={initialData.id} />
+              <ViewBookingForm
+                bookingId={initialData.id}
+                onClose={onClose}
+                onRefresh={() => onSubmit?.(initialData)}
+              />
             )}
           </div>
         </div>

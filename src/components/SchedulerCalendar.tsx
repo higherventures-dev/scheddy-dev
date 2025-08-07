@@ -129,8 +129,8 @@ const fetchBookings = async () => {
   const mapped = (data || []).map((b: any) => ({
     id: b.id,
     title: b.title,
-    start_time: new Date(b.start_time),
-    end_time: new Date(b.end_time),
+    start: new Date(b.start_time),
+    end: new Date(b.end_time),
     user_id: b.user_id,
     client_id: b.client_id,
     status: b.status,
@@ -148,7 +148,7 @@ const fetchBookings = async () => {
 
 useEffect(() => {
   fetchBookings();
-}, []);
+}, [currentView, date]); // Fetch bookings on view or date change
 
 const refreshCalendar = () => {
   fetchBookings(); // Simply reuse the logic
@@ -162,13 +162,15 @@ const refreshCalendar = () => {
         events={events}
         date={date}
         view={currentView}
-        onView={(newView) => setCurrentView(newView as typeof currentView)}
+        onView={(newView) => {
+  setCurrentView(newView as typeof currentView);
+}}
         formats={{
           weekdayFormat: (date, culture, localizer) => format(date, 'EEE d'),
         }}
-        onNavigate={(newDate) => setDate(newDate)}
-        startAccessor="start_time"
-        endAccessor="end_time"
+        onNavigate={(newDate) => {
+  setDate(newDate);
+}}
         defaultDate={defaultDate}
         views={['month', 'week', 'day', 'agenda']}
         components={{
@@ -179,7 +181,7 @@ const refreshCalendar = () => {
           setDrawerMode('view');
           setDrawerOpen(true);
         }}
-        style={{ height: '100%' }}
+        style={{ height: 700 }}
         eventPropGetter={(event) => {
           let backgroundColor = '#9E9E9E';
           switch (event.status) {

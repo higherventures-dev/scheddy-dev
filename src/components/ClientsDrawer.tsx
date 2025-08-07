@@ -2,11 +2,11 @@
 
 import clsx from 'clsx';
 import { Client } from './ClientsTable';
-import { ClientFormData } from './components/ClientsDrawer';
-import { AddClientForm } from './forms/AddClientForm';
-import { EditClientForm } from './forms/EditClientForm';
-import { ViewClientForm } from './forms/ViewClientForm';
-import { DeleteClientForm } from './forms/DeleteClientForm';
+//import { ClientFormData } from '@/components/ClientsDrawer';
+import { AddClientForm } from '@/components/forms/clients/AddClientForm';
+import { EditClientForm } from '@/components/forms/clients/EditClientForm';
+import { ViewClientForm } from '@/components/forms/clients/ViewClientForm';
+import { DeleteClientForm } from '@/components/forms/clients/DeleteClientForm';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
