@@ -2,7 +2,7 @@
 // lib/services/clients.service.ts
 // =============================
 
-import { getUser } from '@/lib/auth/getUserFromSession';
+import { getUserFromSession } from '@/lib/auth/getUserFromSession';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
@@ -15,7 +15,7 @@ import { deleteClient } from '@/lib/data/clients/delete-client';
 
 export async function getClientsForCurrentUser() {
   const supabase = createServerComponentClient({ cookies });
-  const user = await getUser();
+  const user = await getUserFromSession();
   const role = user.user_metadata?.role;
   console.log('User role:', role);
 
@@ -41,7 +41,7 @@ export async function getClientsForCurrentUser() {
 
 export async function createClientForUser(data: any) {
   const supabase = createServerComponentClient({ cookies });
-  const user = await getUser();
+  const user = await getUserFromSession();
   return await createClient(supabase, user, data);
 }
 

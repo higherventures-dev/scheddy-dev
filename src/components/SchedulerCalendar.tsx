@@ -210,10 +210,10 @@ const refreshCalendar = () => {
   setCurrentView(newView as typeof currentView);
 }}
         formats={{
-          weekdayFormat: (date, culture, localizer) => format(date, 'EEE'),
-          dayFormat: (date, culture, localizer) =>
-      localizer.format(date, 'eeee, MMMM d', culture),
-
+  weekdayFormat: (date, culture, localizer) => format(date, 'EEE'),
+  dayFormat: (date, culture, localizer) => {
+    return localizer.format(date, 'eeee, MMMM d', culture);
+  },
 }}
         onNavigate={(newDate) => {
   setDate(newDate);

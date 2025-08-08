@@ -281,7 +281,7 @@
 /* Horizontal lines between time slots */
 .scheddy-calendar .rbc-time-slot{
   border-top: 1px solid #313131 !important;
-   height: 40px; /* or whatever your time slot height is */
+  height: 40px; 
   box-sizing: border-box;
 }
 
@@ -296,7 +296,7 @@
 .scheddy-calendar .rbc-header{
   height: 40px !important;
 }
-}
+
 
 .scheddy-calendar .rbc-allday-cell{
   display: none !important;
@@ -329,4 +329,5 @@
 
 .scheddy-calendar .rbc-time-content{
   padding: 5% 0 0 0 !important;
+}
 }
