@@ -49,13 +49,19 @@ const ColoredEvent = ({ event }: { event: BookingEvent }) => {
   let backgroundColor = '#9E9E9E'; // Default gray
   switch (event.status) {
     case 1:
-      backgroundColor = '#4CAF50';
+      backgroundColor = '#969696';
       break;
-    case 0:
-      backgroundColor = '#FFC107';
+    case 2:
+      backgroundColor = '#69AADE';
       break;
-    case -1:
-      backgroundColor = '#F44336';
+    case 3:
+      backgroundColor = '#E5C26A';
+      break;
+    case 4:
+      backgroundColor = '#FF5C66';
+      break;
+    case 5:
+      backgroundColor = '#008800';
       break;
   }
 
@@ -65,10 +71,11 @@ const ColoredEvent = ({ event }: { event: BookingEvent }) => {
         position: 'relative',
         borderLeft: `6px solid ${backgroundColor}`,
         borderRadius: '6px',
-        padding: '8px 12px',
-        overflow: 'hidden',
+        padding: '8px 24px 8px 12px',
         fontSize: '0.75rem',
         color: backgroundColor,
+         height: '100%',        
+    boxSizing: 'border-box',
       }}
     >
       <div
@@ -80,23 +87,39 @@ const ColoredEvent = ({ event }: { event: BookingEvent }) => {
           bottom: 0,
           backgroundColor: hexToRgba(backgroundColor, 0.2),
           zIndex: 0,
-          borderRadius: '6px',
+          borderTopRightRadius: '6px',
+          borderBottomRightRadius: '6px',
         }}
       />
-      <div style={{ position: 'relative', zIndex: 1 }} className="text-[90%]">
-        <strong>{event.title}</strong>
-        <div style={{ opacity: 0.75 }} className="text-[90%]">
-          {event.start_time &&
-            event.end_time &&
-            `${new Date(event.start_time).toLocaleTimeString([], {
-              hour: 'numeric',
-              minute: '2-digit',
-            })} - ${new Date(event.end_time).toLocaleTimeString([], {
-              hour: 'numeric',
-              minute: '2-digit',
-            })}`}
-        </div>
-      </div>
+     <div style={{ position: 'relative', zIndex: 1 }} className="text-[90%]">
+  <div className="text-white py-1 text-[100%]">
+    {event.first_name + " " + event.last_name}
+  </div>
+  <strong style={{
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'normal',
+    lineHeight: '140%',
+    fontSize: '90%',
+    color: 'white',  // ensure contrast
+  }}>
+    {event.title}
+  </strong>
+  <div className="text-white text-[90%] mt-1">
+    {event.start_time &&
+      event.end_time &&
+      `${new Date(event.start_time).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })} - ${new Date(event.end_time).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })}`}
+  </div>
+</div>
     </div>
   );
 };
@@ -106,6 +129,20 @@ export default function SchedulerCalendar() {
   const [selectedBooking, setSelectedBooking] = useState<BookingEvent | null>(null);
   const defaultDate = useMemo(() => new Date(), []);
   const [date, setDate] = useState(new Date());
+  
+  const minTime = useMemo(() => {
+  const dt = new Date(date);
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+}, [date]);
+
+const maxTime = useMemo(() => {
+  const dt = new Date(date);
+  dt.setHours(23, 59, 59, 999);
+  return dt;
+}, [date]);
+
+
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'day' | 'agenda'>('week');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -131,6 +168,8 @@ const fetchBookings = async () => {
     title: b.title,
     start: new Date(b.start_time),
     end: new Date(b.end_time),
+    start_time: b.start_time,
+    end_time: b.end_time,
     user_id: b.user_id,
     client_id: b.client_id,
     status: b.status,
@@ -142,7 +181,7 @@ const fetchBookings = async () => {
     notes: b.notes,
     price: b.price,
   }));
-
+  console.log('Mapped events:', mapped);
   setEvents(mapped);
 };
 
@@ -158,7 +197,12 @@ const refreshCalendar = () => {
   return (
     <div className="scheddy-calendar text-xs h-full w-full">
       <Calendar
+        toolbar={true}
         localizer={localizer}
+        step={60}
+        timeslots={1}
+         min={minTime}
+          max={maxTime}
         events={events}
         date={date}
         view={currentView}
@@ -166,8 +210,11 @@ const refreshCalendar = () => {
   setCurrentView(newView as typeof currentView);
 }}
         formats={{
-          weekdayFormat: (date, culture, localizer) => format(date, 'EEE d'),
-        }}
+          weekdayFormat: (date, culture, localizer) => format(date, 'EEE'),
+          dayFormat: (date, culture, localizer) =>
+      localizer.format(date, 'eeee, MMMM d', culture),
+
+}}
         onNavigate={(newDate) => {
   setDate(newDate);
 }}
@@ -183,16 +230,22 @@ const refreshCalendar = () => {
         }}
         style={{ height: 700 }}
         eventPropGetter={(event) => {
-          let backgroundColor = '#9E9E9E';
+          let backgroundColor = '#969696';
           switch (event.status) {
             case 1:
-              backgroundColor = '#4CAF50';
+              backgroundColor = '#969696';
               break;
-            case 0:
-              backgroundColor = '#FFC107';
+            case 2:
+              backgroundColor = '#69AADE';
               break;
-            case -1:
-              backgroundColor = '#F44336';
+            case 3:
+              backgroundColor = '#E5C26A';
+              break;
+            case 4:
+              backgroundColor = '#FF5C66';
+              break;
+            case 5:
+              backgroundColor = '#80CF93';
               break;
           }
           return {
@@ -208,36 +261,6 @@ const refreshCalendar = () => {
           };
         }}
       />
-
-      {/* legacy modal can be removed if drawer fully replaces it */}
-      {/* {selectedBooking && !drawerOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-gray-600 p-6 rounded-md w-96 shadow-lg relative text-white">
-            <h2 className="font-bold mb-2">{selectedBooking.title}</h2>
-            <p>
-              <strong>Start:</strong> {new Date(selectedBooking.start_time!).toLocaleString()}
-            </p>
-            <p>
-              <strong>End:</strong> {new Date(selectedBooking.end_time!).toLocaleString()}
-            </p>
-            <p>
-              <strong>Client ID:</strong> {selectedBooking.client_id}
-            </p>
-            <p>
-              <strong>User ID:</strong> {selectedBooking.user_id}
-            </p>
-            <p>
-              <strong>Status:</strong> {selectedBooking.status}
-            </p>
-            <button
-              onClick={() => setSelectedBooking(null)}
-              className="absolute top-2 right-2 text-sm text-white hover:text-white"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )} */}
 
       <BookingDrawer
         open={drawerOpen}

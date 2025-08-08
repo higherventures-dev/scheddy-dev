@@ -34,12 +34,14 @@ export function ViewBookingForm({
         setBooking(data);
         const matchingStatus = STATUS_OPTIONS.find(opt => opt.value === data.status) ?? null;
         setSelectedStatus(matchingStatus);
+         console.log("BOOKING", data);
       }
     };
 
     fetchBooking();
   }, [bookingId]);
 
+ 
   const handleSave = async () => {
     setLoading(true);
     setMessage('');

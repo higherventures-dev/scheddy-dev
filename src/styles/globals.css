@@ -179,7 +179,7 @@
 
 /* Increase the width of each column in week view */
 .scheddy-calendar .rbc-time-content > * {
-  min-width: 180px !important; /* default is usually ~100px */
+  min-width: 160px !important; /* default is usually ~100px */
 }
 
 
@@ -239,5 +239,94 @@
   color: #eee !important;
 }
 
+}/* Hide the default event time labels so your custom time inside the event box shows */
+.scheddy-calendar .rbc-event-label {
+  display: none !important;
 }
+
+/* Month view day cells */
+.scheddy-calendar .rbc-month-view .rbc-day-bg {
+  border: 1px solid #2a2a2a !important; /* dark gray */
+  box-sizing: border-box;    /* ensure borders don't cause layout shift */
+}
+
+/* Optional: Remove the outer border if you want a cleaner look */
+.scheddy-calendar .rbc-month-view {
+  border: none;
+}
+
+.scheddy-calendar .rbc-button-link{
+  font-size: 90% !important;
+}
+
+/* If needed, adjust event spacing inside cells */
+.scheddy-calendar .rbc-event {
+  margin-bottom: 4px !important;
+  padding: 2px 8px !important;
+}
+
+.scheddy-calendar .rbc-header{
+  margin: 0 0 1% 0 !important;
+}
+
+/* Vertical lines between days */
+ .scheddy-calendar .rbc-time-content {
+  border-left: 1px solid #2a2a2a !important;
+}
+
+.rbc-day-slot {
+  border-right: 1px solid #2a2a2a !important;
+}
+
+/* Horizontal lines between time slots */
+.scheddy-calendar .rbc-time-slot{
+  border-top: 1px solid #313131 !important;
+   height: 40px; /* or whatever your time slot height is */
+  box-sizing: border-box;
+}
+
+.scheddy-calendar .rbc-time-column{
+  border-left: 1px solid #313131 !important;
+}
+
+.scheddy-calendar .rbc-time-view .rbc-time-slot {
+  border-top: 1px solid #313131;
+}
+
+.scheddy-calendar .rbc-header{
+  height: 40px !important;
+}
+}
+
+.scheddy-calendar .rbc-allday-cell{
+  display: none !important;
+}
+
+.scheddy-calendar .rbc-timeslot-group{
+  border: 1px solid #313131 !important;
+  position: relative !important;
+}
+
+.scheddy-calendar .rbc-label{
+  position: absolute;
+  left: 0;
+  transform: translateY(-60%);
+  text-align: left;
+  z-index: 1;
+}
+
+.scheddy-calendar .rbc-time-gutter .rbc-time-slot{
+  border: none !important;
+}
+
+.scheddy-calendar .rbc-time-gutter{
+  border: none !important;
+}
+
+.scheddy-calendar .rbc-time-column{
+  border: none !important;
+}
+
+.scheddy-calendar .rbc-time-content{
+  padding: 5% 0 0 0 !important;
 }
