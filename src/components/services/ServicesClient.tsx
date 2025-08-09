@@ -1,7 +1,8 @@
 'use client';
 
-import { ServicesList } from '@/components/ServicesList';
-import { CategoryWithServices, Service } from '@/types';
+import { ServicesList } from '@/components/services/ServicesList';
+import { Service } from '@/lib/types/service';
+import { CategoryWithServices } from '@/lib/types/categorywithservices'
 
 type Props = {
   categories: CategoryWithServices[];
