@@ -14,6 +14,7 @@
   import { getProfileBySlug } from '@/lib/actions/getProfileBySlug';
   import { getServicesByProfile } from '@/lib/actions/getServicesByProfile';
 
+
   export default async function BookingPage({ params }: { params: { slug: string } }) {
 
     if (!params.slug) {

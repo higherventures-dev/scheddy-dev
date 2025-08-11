@@ -25,6 +25,7 @@ const supabase = await createClient();
     .eq("id", user.id)
     .single();
 
+    console.log("PROFILE", profile);
 return ( <div className="p-6 w-[30vw]">
       <h1 className="text-xl mb-4">Profile</h1>
       <ProfileForm userId={user.id} profile={profile} />

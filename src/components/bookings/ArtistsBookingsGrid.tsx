@@ -52,7 +52,7 @@ export default function ArtistsBookingsGrid({ bookings }: { bookings: Booking[] 
 
         const bookingDurationDisplay = getDurationDisplay(b.start_time, b.end_time);
         const formattedStatus = getStatusText(b.status);
-        const artistName = b.artist ? `${b.artist.first_name} ${b.artist.last_name}` : '';
+        const clientName = b.client ? `${b.client.first_name} ${b.client.last_name}` : '';
 
         return (    
             <div className="border p-2 shadow-sm hover:shadow-md transition">
@@ -67,7 +67,7 @@ export default function ArtistsBookingsGrid({ bookings }: { bookings: Booking[] 
                   {formattedLongDateWithDay}<br />
                 </div>
                 <div>
-                  CLIENT
+                  {clientName}
                 </div>
                 <div>
                   ${b.price?.toFixed(2) ?? '0.00'}

@@ -9,7 +9,7 @@ export async function getBookingsForUserService(userId: string, email?: string):
     .from('bookings')
     .select(`
       *,
-      artist:artist_id (
+      client:client_id (
         first_name,
         last_name
       )
