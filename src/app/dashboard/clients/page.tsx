@@ -125,8 +125,8 @@ export default function Page() {
     <div className="p-2 relative">
       <div className="flex flex-col justify-between items-start">
         <div className="w-full flex justify-between items-center py-4">
-          <div className="text-left">Clients</div>
-          <div className="text-right">
+          <div className="text-left"><h1 className="text-xl">Clients</h1></div>
+          <div className="text-right font-bold">
             <button
               onClick={() => {
                 setSelectedClient(null);
@@ -141,14 +141,13 @@ export default function Page() {
         </div>
 
         <div className="flex gap-2 w-full text-left">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
+          {/* <input
             type="text"
             placeholder="Search clients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border px-6 py-2 rounded-md w-full md:w-64 text-xs"
-          />
+          /> */}
         </div>
       </div>
 

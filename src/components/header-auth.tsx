@@ -27,12 +27,7 @@ export default async function AuthButton() {
       <>
         <div className="flex items-center">
           <div>
-            <Badge
-              variant={"default"}
-              className="font-normal pointer-events-none"
-            >
-              Please update .env.local file with anon key and url
-            </Badge>
+            &nbsp;
           </div>
           <div className="flex gap-2">
             <Button
@@ -61,15 +56,25 @@ export default async function AuthButton() {
 
 
   return user ? (
-    <div className="flex-1 p-2 flex justify-end py-0 px-2">
-    <div className="flex items-right gap-8">
-      <span className="py-2 text-xs">Logged In: {user.email}</span>
-      <form action={signOutAction}>
-        <Button type="submit" variant={"outline"} size="sm" className="text-xs">
-          Sign out
-        </Button>
-      </form>
-    </div>
+    <div className="p-2  py-0 px-2 grid grid-cols-3">
+      <div className="justify-start">
+        
+      </div>
+      <div className="justify-center items-center text-center">
+         <input
+    type="search"
+    placeholder=""
+    className="w-full max-w-xs px-3 py-1 rounded border border-[#3a3a3a] text-[70%] focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+      </div>
+      <div className="flex items-right justify-end gap-8">
+        <span className="py-2 text-xs">Logged In: {user.email}</span>
+        <form action={signOutAction}>
+          <Button type="submit" variant={"outline"} size="sm" className="text-xs">
+            Sign out
+          </Button>
+        </form>
+      </div>
     </div>
   ) : (
     <div className="flex-1 p-4 flex justify-end">

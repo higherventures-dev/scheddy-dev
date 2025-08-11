@@ -19,7 +19,6 @@ const links = [
   { name: 'Services', href: '/dashboard/services', icon: UserGroupIcon },
   { name: 'Sales', href: '/dashboard/sales', icon: TagIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
-  { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },
 ];
 
 export default function Navigation() {
