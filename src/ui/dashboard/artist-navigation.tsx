@@ -41,8 +41,8 @@ export default function Navigation() {
               className={clsx(
                 'flex items-center gap-2 rounded-md p-3 text-xs font-medium transition-colors',
                 {
-                  'bg-white/10 text-[#E5C26A]': isActive,
-                  'text-white hover:text-[#E5C26A] hover:bg-white/10': !isActive,
+                  'bg-white/10 text-[#69AADE]': isActive,
+                  'text-white hover:text-[#69AADE] hover:bg-white/10': !isActive,
                 }
               )}
             >
@@ -64,8 +64,8 @@ export default function Navigation() {
               className={clsx(
                 'flex items-center gap-2 rounded-md p-3 text-xs font-medium transition-colors',
                 {
-                  'bg-white/10 text-[#E5C26A]': isActive,
-                  'text-white hover:text-[#E5C26A] hover:bg-white/10': !isActive,
+                  'bg-white/10 text-[#69AADE]': isActive,
+                  'text-white hover:text-[#69AADE] hover:bg-white/10': !isActive,
                 }
               )}
             >

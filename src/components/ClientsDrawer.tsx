@@ -2,26 +2,17 @@
 
 import clsx from 'clsx';
 import { Client } from './ClientsTable';
-//import { ClientFormData } from '@/components/ClientsDrawer';
 import { AddClientForm } from '@/components/forms/clients/AddClientForm';
 import { EditClientForm } from '@/components/forms/clients/EditClientForm';
 import { ViewClientForm } from '@/components/forms/clients/ViewClientForm';
 import { DeleteClientForm } from '@/components/forms/clients/DeleteClientForm';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Tab } from '@headlessui/react';
-const clientSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email').optional(),
-  phone: z.string().optional(),
-});
+import { ClientFormData } from '@/components/forms/clients/AddClientForm';
 
 interface ClientsDrawerProps {
   initialData?: Client;
   onClose: () => void;
   onSubmit: (data: ClientFormData) => void;
+  onDelete?: (client: Client) => Promise<void>;
   open: boolean;
   mode?: 'add' | 'edit' | 'view' | 'delete';
 }
@@ -30,6 +21,7 @@ export function ClientsDrawer({
   initialData,
   onClose,
   onSubmit,
+  onDelete,
   open,
   mode = 'add',
 }: ClientsDrawerProps) {
@@ -65,8 +57,12 @@ export function ClientsDrawer({
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold capitalize">
-              {isView && 'View Client'}
-              {isEdit && 'Edit Client'}
+              {isView && initialData && (initialData.first_name || initialData.last_name)
+                ? `${initialData.first_name ?? ''} ${initialData.last_name ?? ''}`.trim()
+                : null}
+              {isEdit && initialData && (initialData.first_name || initialData.last_name)
+                ? `${initialData.first_name ?? ''} ${initialData.last_name ?? ''}`.trim()
+                : null}
               {isAdd && 'Add Client'}
               {isDelete && 'Delete Client'}
             </h2>
@@ -87,8 +83,12 @@ export function ClientsDrawer({
             {isView && initialData && (
               <ViewClientForm initialData={initialData} onClose={onClose} />
             )}
-            {isDelete && initialData && (
-              <DeleteClientForm initialData={initialData} onSubmit={onSubmit} />
+            {isDelete && initialData && onDelete && (
+              <DeleteClientForm
+                initialData={initialData}
+                onDelete={onDelete}
+                onClose={onClose}
+              />
             )}
           </div>
         </div>

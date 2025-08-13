@@ -15,18 +15,12 @@ export default async function LoungePage() {
         redirect('/login')
     }
 
-    console.log("User Id", data.user.id )
-
-    //get user profile
-    //const profile = await getUserProfile(data.user.id)
-
     //get user bookings
     const bookings = await getBookingsForUserService(data.user.id, data.user.email)
 
      return (
         <main className="p-6">
-        {/* <h1 className="text-2xl font-bold mb-4">Welcome back, {profile.first_name}!</h1> */}
-        <BookingsGrid bookings={bookings} />
+            <BookingsGrid bookings={bookings} />
         </main>
     )
 }

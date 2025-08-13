@@ -1,7 +1,7 @@
 // app/lounge/page.tsx
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { getBookingsForUserService } from '@/features/bookings/services/getBookingsForUserService'
+import { getSalesByArtist } from '@/features/bookings/services/getSalesByArtist'
 import ArtistsBookingsGrid from '@/components/bookings/ArtistsBookingsGrid'
 
 export default async function SalesPage() {
@@ -15,15 +15,16 @@ export default async function SalesPage() {
     }
 
     console.log("User Id", data.user.id )
-
+    console.log("User Email", data.user.email)
 
     //get user bookings
-    const bookings = await getBookingsForUserService(data.user.id, data.user.email)
+    const bookings = await getSalesByArtist(data.user.id)
+    console.log("SALES", bookings)
 
      return (
         <main className="p-6">
         {/* <h1 className="text-2xl font-bold mb-4">Welcome back, {profile.first_name}!</h1> */}
-        <div className="text-left"><h1 className="text-xl">Sales</h1></div>
+        <div className="text-left w-full"><h1 className="text-xl">Sales</h1></div>
       
         <ArtistsBookingsGrid bookings={bookings} />
         </main>

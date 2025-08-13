@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { getDurationDisplay } from '@/lib/utils/getDurationDisplay'
 import { getBookingStatusImage } from '@/lib/utils/getBookingStatusImage'
+import { getBookingStatusInfo } from '@/lib/utils/getBookingStatusInfo'
 import { string } from 'zod';
 
 export default function BookingsGrid({ bookings }: { bookings: Booking[] }) {
@@ -53,7 +54,7 @@ export default function BookingsGrid({ bookings }: { bookings: Booking[] }) {
         }
 }
 
-const formattedStatus = getStatusText(b.status); 
+const bookingStatus = getBookingStatusInfo(b.status); 
 
         //const durationHours = Math.round((end.getTime() - start.getTime()) / 3600000)
         // const statusCapitalized = b.status.charAt(0).toUpperCase() + b.status.slice(1)
@@ -78,15 +79,17 @@ const formattedStatus = getStatusText(b.status);
                   </span>
                 </div>
          <div className="col-span-2 pr-1 text-right flex items-center justify-end">
-  <span className="inline-flex items-center bg-[#344554] rounded-sm px-1">
-    <Image
-      src={getBookingStatusImage(b.status)}
-      alt={formattedStatus}
+  <span
+  className="inline-flex items-center rounded-sm px-1"
+  style={{ backgroundColor: bookingStatus.color || "transparent" }}
+>  <Image
+      src={bookingStatus.image}
+      alt={bookingStatus.name}
       width={16}
       height={16}
       className="mr-1"
     />
-    <span className="text-[90%]">{formattedStatus}</span>
+    <span className="text-[90%]">{bookingStatus.name}</span>
   </span>
 </div>         </div>
               <div className="grid grid-cols-6 gap-1 pt-4">

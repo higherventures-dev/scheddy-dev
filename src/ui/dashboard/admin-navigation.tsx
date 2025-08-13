@@ -35,9 +35,9 @@ export default function navigation() {
           <Link
             key={link.name}
             href={link.href}
-            className={clsx('flex h-[40px] grow items-left justify-left gap-2 rounded-md p-3 text-white text-xs hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
+            className={clsx('flex h-[40px] grow items-left justify-left gap-2 rounded-md p-3 text-white text-xs hover:bg-transparent hover:text-[#69AADE] md:flex-none md:justify-start md:p-2 md:px-3',
               {
-                'text-blue-600': pathname === link.href,
+                'text-[#69AADE]': pathname === link.href,
               },
             )}
           >

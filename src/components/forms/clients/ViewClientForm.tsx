@@ -5,9 +5,22 @@ import clsx from 'clsx';
 import { CheckCircle } from 'lucide-react';
 import { XCircle } from 'lucide-react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { XCircleIcon } from '@heroicons/react/24/solid';
 import { ClockIcon } from '@heroicons/react/24/outline';
+import { formatPhoneNumber } from "@/lib/utils/formatPhoneNumber";
+import { getReferralSource } from "@/lib/utils/getReferralSource";
+import { ShowStatus } from '@/lib/utils/ShowStatus';
+import { PhoneIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon } from '@heroicons/react/24/outline';
+import type { ClientProfileWithSummary } from '@/lib/types/clientprofilewithsummary';
+import BookingSummary from '@/components/clients/BookingSummary'  // wherever you put the client-side fetch component
 
-const tabs = ['General', 'Bookings', 'Reviews','Photos','Notes'];
+interface Props {
+  clientId: string
+}
+
+// const tabs = ['General', 'Bookings'];
+const tabs = ['General'];
 
 export function ViewClientForm({ initialData, onClose }: { initialData: Client; onClose: () => void }) {
   return (
@@ -37,13 +50,30 @@ export function ViewClientForm({ initialData, onClose }: { initialData: Client; 
 
                       {/* Row 1: 1 column - Contact Information*/}
                       <h2 className="text-sm">Contact Information</h2>
-                      <div className="space-y-2 text-white">
+                      {/* <div className="space-y-2 text-white">
                         <div><span className="text-[color:#969696]">Name:</span> {initialData.first_name}&nbsp;{initialData.last_name}</div>
-                        <div><span className="text-[color:#969696]">Phone:</span> {initialData.phone}</div>
-                        <div><span className="text-[color:#969696]">Email:</span> {initialData.email}</div>
+                        <div> <PhoneIcon className="h-4 mr-2 text-[#969696]" /><span className="text-[color:#969696]">Phone:</span> {formatPhoneNumber(initialData.phone_number)}</div>
+                        <div> <EnvelopeIcon className="h-4 mr-2 text-[#969696]" /><span className="text-[color:#969696]">Email:</span> {initialData.email_address}</div>
+                      </div> */}
+
+                      <div className="grid grid-rows-2 grid-cols-2 gap-4 ">
+                        <div className="text-[#969696] flex">
+                            <PhoneIcon className="h-4 mr-2 text-[#969696]" />
+                            <span>Phone</span>
+                        </div>
+                        <div className="text-right">{formatPhoneNumber(initialData.phone_number)}</div>
+                        <div className="text-[#969696] flex">
+                            <EnvelopeIcon className="h-4 mr-2 text-[#969696]" />
+                            <span>Email</span>
+                        </div>
+                        <div className="text-right">{initialData.email_address}</div>
                       </div>
+
                       <hr className="border-t border-[color:#3A3A3A]" />
+
                       {/* Row 2: 2 columns - Numbers */}
+                      <BookingSummary clientId={initialData.id} />
+                          
                       <h2 className="text-sm">Numbers</h2>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-[#3A3A3A] p-4 rounded"><span className="text-2xl text-[color:#69AADE]">0</span><br></br>Bookings</div>
@@ -60,8 +90,8 @@ export function ViewClientForm({ initialData, onClose }: { initialData: Client; 
                         <div><span className="text-[color:#969696]">Appointment notifications</span></div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <CheckCircleIcon className="w-4 h-4 text-green-500" />&nbsp;Email
-                            <CheckCircleIcon className="w-4 h-4 text-green-500" />&nbsp;Text
+                            <ShowStatus status={initialData.email_appointment_notification} text="Email" />
+                            <ShowStatus status={initialData.text_appointment_notification} text="Text" />
                           </div>
                         </div>
                       </div>
@@ -69,14 +99,14 @@ export function ViewClientForm({ initialData, onClose }: { initialData: Client; 
                         <div><span className="text-[color:#969696]">Marketing notifications</span></div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <CheckCircleIcon className="w-4 h-4 text-green-500" />&nbsp;Email
-                            <CheckCircleIcon className="w-4 h-4 text-green-500" />&nbsp;Text
+                            <ShowStatus status={initialData.email_marketing_notification} text="Email" />
+                            <ShowStatus status={initialData.text_marketing_notification} text="Text" />
                           </div>
                         </div>
                       </div>
                       <hr className="border-t border-[color:#3A3A3A]" />
                       {/* Repeat pattern - Deposits and cancellation */}
-                      <h2 className="text-sm">Deposits & Cancellations</h2>
+{/*                       <h2 className="text-sm">Deposits & Cancellations</h2>
                       <div className="space-y-4">
                         <div className="flex items-start gap-2">
                           <CheckCircleIcon className="w-5 h-5 text-green-500" />
@@ -102,13 +132,12 @@ export function ViewClientForm({ initialData, onClose }: { initialData: Client; 
                           </div>
                         </div>
                       </div>
-                      <hr className="border-t border-[color:#3A3A3A]" />
-                      {/* Repeat pattern - Additional info */}
+                      <hr className="border-t border-[color:#3A3A3A]" /> */}
                       <h2 className="text-sm">Additional Information</h2>
                       <div className="grid grid-cols-1 gap-4">
-                        <div><span className="text-[color:#969696]">Occupation</span></div>
-                        <div><span className="text-[color:#969696]">Client source</span></div>
-                        <div><span className="text-[color:#969696]">Additional phone</span></div>
+                        <div><span className="text-[color:#969696]">Occupation</span>&nbsp;{initialData.occupation}</div>
+                        <div><span className="text-[color:#969696]">Client source</span>&nbsp;{getReferralSource(initialData.referral_source)}</div>
+                        <div><span className="text-[color:#969696]">Additional phone</span>&nbsp;{formatPhoneNumber(initialData.phone_number_2)}</div>
                       </div>
                     </div>
                 </Tab.Panel>

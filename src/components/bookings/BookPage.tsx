@@ -195,8 +195,6 @@ export default function BookPage({ profile, services }: { profile: any; services
           />
         </div>
 
-        {/* ... rest of your component stays the same ... */}
-
         <div className="mb-8">
           <h2 className="mb-4 text-2xl font-bold">Services</h2>
           <ul>
@@ -244,11 +242,149 @@ export default function BookPage({ profile, services }: { profile: any; services
         </div>
       </div>
 
-      {/* Booking Modal ... stays the same ... */}
-
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">
-        {/* ... rest of dialog code ... */}
-      </Dialog>
+        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-md bg-[#323232] shadow-lg rounded-md p-6 text-white">
+            {/* Service Info */}
+            <div className="mb-4">
+              <h2 className="text-lg font-bold mb-1">{selectedService?.name}</h2>
+              <p className="text-xs text-gray-300 mb-2">{selectedService?.summary}</p>
+              <p className="text-xs text-gray-400">
+                {selectedService?.price ? `$${selectedService.price}` : '$125'} –{' '}
+                {convertMinutesToHours(selectedService?.duration) || '45 min'}
+              </p>
+            </div>
+
+            <hr className="border-gray-600 my-4" />
+
+            {/* Date Picker */}
+            <div className="mb-2">
+              <DatePicker value={selectedDate} onChange={setSelectedDate} />
+              {formErrors.selectedDate && (
+                <p className="text-red-600 text-xs mt-1">{formErrors.selectedDate}</p>
+              )}
+            </div>
+
+            <hr className="border-gray-600 my-4" />
+
+            {/* Time Picker */}
+            <div className="mb-2">
+              <ListTimePicker value={selectedTime} onChange={setSelectedTime} />
+              {formErrors.selectedTime && (
+                <p className="text-red-600 text-xs mt-1">{formErrors.selectedTime}</p>
+              )}
+            </div>
+
+            <hr className="border-gray-600 my-4" />
+
+            {/* Booking Form */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await handleConfirmBooking();
+              }}
+              className="space-y-4 text-[70%]"
+              noValidate
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1">First name</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={inputClass('firstName')}
+                    aria-invalid={!!formErrors.firstName}
+                    aria-describedby="firstName-error"
+                    required
+                  />
+                  {formErrors.firstName && (
+                    <p id="firstName-error" className="text-red-600 text-xs mt-1">
+                      {formErrors.firstName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block mb-1">Last name</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={inputClass('lastName')}
+                    aria-invalid={!!formErrors.lastName}
+                    aria-describedby="lastName-error"
+                    required
+                  />
+                  {formErrors.lastName && (
+                    <p id="lastName-error" className="text-red-600 text-xs mt-1">
+                      {formErrors.lastName}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block mb-1">Phone number</label>
+                <input
+                  type="text"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className={inputClass('phoneNumber')}
+                  aria-invalid={!!formErrors.phoneNumber}
+                  aria-describedby="phoneNumber-error"
+                  required
+                />
+                {formErrors.phoneNumber && (
+                  <p id="phoneNumber-error" className="text-red-600 text-xs mt-1">
+                    {formErrors.phoneNumber}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-1">Email</label>
+                <input
+                  type="email"
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                  className={inputClass('emailAddress')}
+                  aria-invalid={!!formErrors.emailAddress}
+                  aria-describedby="emailAddress-error"
+                  required
+                />
+                {formErrors.emailAddress && (
+                  <p id="emailAddress-error" className="text-red-600 text-xs mt-1">
+                    {formErrors.emailAddress}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-1">Notes</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full border border-gray-600 rounded p-2 bg-[#292929] text-white"
+                />
+              </div>
+
+              <div className="flex justify-between mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="text-xs text-gray-400 hover:underline"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-white text-black px-4 py-2 rounded text-xs font-semibold"
+                >
+                  Confirm Booking
+                </button>
+              </div>
+            </form>
+          </Dialog.Panel>
+        </div>
+             </Dialog>
     </div>
   );
 }
