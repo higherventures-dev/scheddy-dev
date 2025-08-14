@@ -1,43 +1,43 @@
 import { createClient } from '@/utils/supabase/client';
 import { sendBookingStatusChangeEmail } from '@/features/bookings/services/sendBookingStatusChangeEmail';
 
-export async function updateBookingStatus(bookingId: string, newStatus: number) {
+export async function updateBookingStatus(
+  bookingId: string,
+  newStatus: number,
+  refreshCalendar: () => void // Parent callback
+) {
   const supabase = createClient();
 
-  console.log("Booking Id", bookingId);
-  // Update booking
-  const { data: updated, error: updateError } = await supabase
+  // ✅ Update booking status
+  const { data: updatedBooking, error: updateError } = await supabase
     .from('bookings')
     .update({ status: newStatus })
     .eq('id', bookingId)
-    .single(); // returns an object or null
+    .select('id, email_address, status') // ✅ Fetch updated record
+    .single();
 
-  
-  // if (updateError || !updated) {
-  //    console.log("UPDATE ERROR", updateError);
-  //   console.log("UPD", updated);
-  //   console.error('Error updating booking:', updateError);
-  //   throw new Error('Booking update failed');
-  // }
+  if (updateError) {
+    console.error('Error updating booking status:', updateError);
+    return { success: false, error: updateError };
+  }
 
-  // // Get current user (artist)
-  // const {
-  //   data: { user },
-  //   error: userError,
-  // } = await supabase.auth.getUser();
+  if (!updatedBooking) {
+    console.error('No updated booking found after update.');
+    return { success: false, error: 'No updated booking found.' };
+  }
 
-  // if (userError || !user) {
-  //   console.error('Error fetching current user:', userError);
-  //   throw new Error('No authenticated user found');
-  // }
+  // ✅ Send email to the updated email address
+  try {
+    await sendBookingStatusChangeEmail(updatedBooking.email_address, newStatus);
+    console.log(`Email sent to ${updatedBooking.email_address}`);
+  } catch (emailError) {
+    console.error('Error sending status change email:', emailError);
+  }
 
-  // // Extract emails
-  // const artistEmailAddress = user.email ?? '';
-  // const bookingEmailAddress = updated.email_address ?? '';
+  // ✅ Refresh calendar after update
+  if (typeof refreshCalendar === 'function') {
+    refreshCalendar();
+  }
 
-  // // Send emails (don't reuse variable names)
-  // await sendBookingStatusChangeEmail(artistEmailAddress, newStatus, updated);
-  // await sendBookingStatusChangeEmail(bookingEmailAddress, newStatus, updated);
-
-  return updated;
+  return { success: true, data: updatedBooking };
 }

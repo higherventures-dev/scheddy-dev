@@ -25,7 +25,6 @@ export async function createBooking(data: {
 
   // Step 1: Get or create client
   let client_id = data.client_id;
-  console.log("Logged Client ID", client_id);
 
   if (!client_id || client_id.length === 0) {
     client_id = await createClientService({
@@ -36,7 +35,6 @@ export async function createBooking(data: {
       artist_id: data.artist_id,
       studio_id: data.studio_id,
     });
-    console.log("New Client ID", client_id);
   }
  
   const user_id = data.user_id ?? null;
