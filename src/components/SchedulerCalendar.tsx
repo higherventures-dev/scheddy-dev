@@ -143,15 +143,18 @@ const maxTime = useMemo(() => {
 }, [date]);
 
 
-  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day' | 'agenda'>('week');
+  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'delete' | 'add'>('view');
 
-  const handleCloseDrawer = () => {
+  const handleCloseDrawer = (shouldRefresh = false) => {
     setDrawerOpen(false);
     setSelectedBooking(null);
-  };
+    if (shouldRefresh) {
+        refreshCalendar(); // Trigger fetch only if update happened
+    }
+};
 
 const fetchBookings = async () => {
   const supabase = createClient();
@@ -218,7 +221,6 @@ const refreshCalendar = () => {
         onNavigate={(newDate) => {
   setDate(newDate);
 }}
-        defaultDate={defaultDate}
         views={['month', 'week', 'day', 'agenda']}
         components={{
           event: ColoredEvent,
@@ -228,7 +230,7 @@ const refreshCalendar = () => {
           setDrawerMode('view');
           setDrawerOpen(true);
         }}
-        style={{ height: 700 }}
+        style={{ height: 780 }}
         eventPropGetter={(event) => {
           let backgroundColor = '#969696';
           switch (event.status) {
@@ -263,12 +265,12 @@ const refreshCalendar = () => {
       />
 
       <BookingDrawer
-        open={drawerOpen}
-        initialData={selectedBooking}
-        onClose={handleCloseDrawer}
-        onRefresh={refreshCalendar}
-        mode={drawerMode}
-      />
+  open={drawerOpen}              // controls slide in/out
+  initialData={selectedBooking}
+  onClose={handleCloseDrawer}
+  onRefresh={refreshCalendar}    // refresh calendar after save
+  mode={drawerMode}
+/>
     </div>
   );
 }

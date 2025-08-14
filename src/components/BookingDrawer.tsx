@@ -3,17 +3,13 @@
 import clsx from 'clsx';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { ViewBookingForm } from '@/components/forms/bookings/ViewBookingForm';
-import { z } from 'zod';
-const clientSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Invalid email').optional(),
-  phone: z.string().optional(),
-});
+import { Booking, BookingFormData } from '@/types/booking'; // Adjust types
+import { Fragment } from 'react';
+
 interface BookingDrawerProps {
   initialData?: Booking;
-  onClose: () => void;
-  onSubmit: (data: BookingFormData) => void;
+  onClose: (shouldRefresh?: boolean) => void; // <-- supports refresh flag
+  onSubmit?: (data: BookingFormData) => void;
   open: boolean;
   mode?: 'add' | 'edit' | 'view' | 'delete';
 }
@@ -23,55 +19,45 @@ export function BookingDrawer({
   onClose,
   onSubmit,
   open,
-  mode = 'add',
+  mode = 'view',
 }: BookingDrawerProps) {
-  const isView = mode === 'view';
-  const isEdit = mode === 'edit';
-  const isAdd = mode === 'add';
-  const isDelete = mode === 'delete';
-
   return (
-    <div
-      className={clsx(
-        'fixed inset-0 z-50 transition-all duration-700',
-        open ? 'pointer-events-auto' : 'pointer-events-none'
-      )}
-    >
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex pointer-events-none">
+      {/* Overlay */}
       <div
-        onClick={onClose}
+        onClick={() => onClose(false)}
         className={clsx(
-          'absolute inset-0 bg-black/50 transition-opacity duration-700',
-          open ? 'opacity-100' : 'opacity-0'
+          'absolute inset-0 bg-black transition-opacity duration-300',
+          open ? 'opacity-50 pointer-events-auto' : 'opacity-0'
         )}
       />
 
-      {/* Slide-in Drawer */}
+      {/* Drawer */}
       <div
         className={clsx(
-          'absolute top-0 right-0 h-full w-full sm:w-[25vw] bg-[#313131] rounded-lg mt-2 shadow-lg transform transition-transform duration-700 ease-in-out',
+          'relative ml-auto w-full sm:w-[25vw] h-full bg-[#313131] rounded-l-lg shadow-xl transform transition-transform duration-300 ease-in-out pointer-events-auto',
           open ? 'translate-x-0' : 'translate-x-full'
         )}
       >
-        <div className="p-4 overflow-y-auto h-full text-white">
+        <div className="flex flex-col h-full p-4 overflow-y-auto text-white">
           {/* Header */}
-          <div className="flex justify-end items-center mb-4">
+          <div className="flex justify-end mb-4">
             <button
-              onClick={onClose}
+              onClick={() => onClose(false)}
               className="text-gray-300 hover:text-white text-lg"
             >
               <XCircleIcon className="h-5 mr-2 text-[#969696]" />
             </button>
           </div>
-          <div>
-            {initialData?.id && (
-              <ViewBookingForm
-                bookingId={initialData.id}
-                onClose={onClose}
-                onRefresh={() => onSubmit?.(initialData)}
-              />
-            )}
-          </div>
+
+          {/* Booking Form */}
+          {initialData?.id && (
+            <ViewBookingForm
+              bookingId={initialData.id}
+              onClose={onClose} // receives shouldRefresh flag
+              onRefresh={() => onSubmit?.(initialData)}
+            />
+          )}
         </div>
       </div>
     </div>
