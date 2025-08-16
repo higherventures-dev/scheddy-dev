@@ -1,19 +1,33 @@
-import { createClient } from '@/utils/supabase/server'
-import { Booking } from '@/lib/types/booking'
+import { createClient } from '@/utils/supabase/server';
+import { Booking } from '@/lib/types/booking';
 
-export async function getSalesByArtist(id: string): Promise<any> {
-  const supabase = await createClient()
+export async function getSalesByArtist(
+  id: string,
+  currentMonthOnly: boolean = false
+): Promise<Booking[]> {
+  const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('bookings')
     .select('*, client:client_id(first_name, last_name)')
     .eq('artist_id', id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching bookings:', error.message)
-    return []
+  // ✅ Apply current month filter if requested
+  if (currentMonthOnly) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+
+    query = query.gte('created_at', startOfMonth).lte('created_at', endOfMonth);
   }
 
-  return data as Booking[]
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching bookings:', error.message);
+    return [];
+  }
+
+  return data as Booking[];
 }

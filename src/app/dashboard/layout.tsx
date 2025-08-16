@@ -52,12 +52,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     first_name?: string;
     last_name?: string;
     logo_url?: string;
+    display_name: string;
   } | null = null;
 
   if (userId) {
     const { data, error } = await supabase
       .from('profiles')
-      .select('role, business_name, first_name, last_name, logo_url')
+      .select('role, business_name, first_name, last_name, logo_url, display_name')
       .eq('id', userId)
       .single();
     profile = data;
@@ -71,10 +72,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   // Determine display name and image source
-  const displayName =
-    profile?.business_name && profile.business_name.trim() !== ''
-      ? profile.business_name
-      : `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User';
+  const displayName = profile.display_name;
+    // profile?.business_name && profile.business_name.trim() !== ''
+    //   ? profile.business_name
+    //   : `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User';
 
   const logoSrc = profile?.logo_url && profile.logo_url.trim() !== ''
     ? profile.logo_url
@@ -85,20 +86,29 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex h-screen w-screen flex-col md:flex-row md:overflow-hidden bg-[#1A1A1A]">
         <div className="w-full flex-none md:w-48 border-r py-6 px-2">
           <div className="flex items-center gap-2 text-xs py-1 px-3 pb-5 border-b-gray-100">
-            <Image
-              src={logoSrc}
-              alt={displayName}
-              width={20}
-              height={20}
-              className="rounded"
-              unoptimized={true} // remove if using next.config.js domains
-            />
-            {displayName}
+            <Image src="/assets/images/logo.svg" alt="Scheddy" width={15} height={5} />
+                   <span className="pt-1 pl-2 text-lg">scheddy</span>
           </div>
           <UserSidebar />
         </div>
         <div className="flex-grow p-4 md:overflow-y-auto md:p-4 bg-[#262626]">
-          <Header>{children}</Header>
+           <div className="">
+            <div className="justify-start text-left">
+            </div>
+            <div className="flex items-center gap-2 font-semibold text-2xl pt-4">
+  <Image
+    src={logoSrc}
+    alt={displayName}
+    width={28}  // slightly bigger for visibility
+    height={28}
+    className="rounded"
+    unoptimized={true} // remove if using next.config.js domains
+  />
+  <span>{displayName}</span>
+</div>
+            <div>
+            <Header>{children}</Header>
+            </div></div>
           <div className="border border-[#313131] mt-2"></div>
           {children}
         </div>

@@ -1,4 +1,3 @@
-// app/lounge/page.tsx
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { getSalesByArtist } from '@/features/bookings/services/getSalesByArtist'
@@ -14,12 +13,8 @@ export default async function SalesPage() {
         redirect('/login')
     }
 
-    console.log("User Id", data.user.id )
-    console.log("User Email", data.user.email)
-
     //get user bookings
     const bookings = await getSalesByArtist(data.user.id)
-    console.log("SALES", bookings)
 
      return (
         <main className="p-6">

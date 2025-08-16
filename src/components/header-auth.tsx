@@ -56,7 +56,7 @@ export default async function AuthButton() {
 
 
   return user ? (
-    <div className="p-2  py-0 px-2 grid grid-cols-3">
+    <div className="py-0 px-2 grid grid-cols-3 pt-0">
       <div className="justify-start">
         
       </div>
