@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
-import Header from '@/components/header-auth';
+import Header from '@/components/HeaderAuth';
 import Footer from '@/components/dashboard/footer';
 import SideBar from '@/ui/dashboard/sidebar';
 import ArtistSideBar from '@/ui/dashboard/artist-sidebar';
@@ -71,15 +71,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
     else if (role === 'admin') UserSidebar = AdminSideBar;
   }
 
-  // Determine display name and image source
-  const displayName = profile.display_name;
-    // profile?.business_name && profile.business_name.trim() !== ''
-    //   ? profile.business_name
-    //   : `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User';
+  // // Determine display name and image source
+  // const displayName = profile.display_name;
+  //   // profile?.business_name && profile.business_name.trim() !== ''
+  //   //   ? profile.business_name
+  //   //   : `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim() || 'User';
 
-  const logoSrc = profile?.logo_url && profile.logo_url.trim() !== ''
-    ? profile.logo_url
-    : '/assets/images/business-avatar.png';
+  // const logoSrc = profile?.logo_url && profile.logo_url.trim() !== ''
+  //   ? profile.logo_url
+  //   : '/assets/images/business-avatar.png';
 
   return (
     <main className={`min-h-screen flex flex-col items-center ${inter.variable} font-sans`}>
@@ -96,15 +96,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="justify-start text-left">
             </div>
             <div className="flex items-center gap-2 font-semibold text-2xl pt-4">
-  <Image
-    src={logoSrc}
-    alt={displayName}
-    width={28}  // slightly bigger for visibility
-    height={28}
-    className="rounded"
-    unoptimized={true} // remove if using next.config.js domains
-  />
-  <span>{displayName}</span>
+
 </div>
             <div>
             <Header>{children}</Header>

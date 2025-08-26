@@ -36,7 +36,7 @@ export default async function Signup(props: {
     </div>
   </div>
         <div className="flex flex-col gap-4 [&>input]:mb-3 mt-8">
-          <select
+          {/* <select
             name="role"
             id="role"
             required
@@ -47,7 +47,7 @@ export default async function Signup(props: {
             <option value="studio">Studio</option>
             <option value="customer">Client</option>
             <option value="admin">Admin</option>
-          </select>
+          </select> */}
 
           <Label htmlFor="email">Email</Label>
           <Input name="email" placeholder="you@example.com" required />

@@ -54,7 +54,8 @@ export const signUpAction = async (formData: FormData) => {
   const password = formData.get('password')?.toString();
   const firstname = formData.get('firstname') as string;
   const lastname = formData.get('lastname') as string;
-  const role = formData.get('role') as string;
+  //const role = formData.get('role') as string;
+  const role = "artist"
   const supabase = await createClient();
   const origin = (await headers()).get('origin');
 

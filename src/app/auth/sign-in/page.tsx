@@ -27,13 +27,13 @@ export default function Login() {
           </div>
           <Input name="password" placeholder="Your password" required type="password" />
 
-          <Link className="text-xs text-foreground underline" href="/forgot-password">
+          <Link className="text-xs text-foreground underline" href="/auth/forgot-password">
             Forgot Password?
           </Link>
 
           <p className="text-xs text-foreground">
             Don't have an account?{' '}
-            <Link className="text-foreground font-medium underline" href="/sign-up">
+            <Link className="text-foreground font-medium underline" href="/auth/sign-up">
               Sign up
             </Link>
             <br />

@@ -231,37 +231,38 @@ const refreshCalendar = () => {
           setDrawerOpen(true);
         }}
         style={{ height: 780 }}
-        eventPropGetter={(event) => {
-          let backgroundColor = '#969696';
-          switch (event.status) {
-            case 1:
-              backgroundColor = '#969696';
-              break;
-            case 2:
-              backgroundColor = '#69AADE';
-              break;
-            case 3:
-              backgroundColor = '#E5C26A';
-              break;
-            case 4:
-              backgroundColor = '#FF5C66';
-              break;
-            case 5:
-              backgroundColor = '#80CF93';
-              break;
-          }
-          return {
-            style: {
-              backgroundColor: hexToRgba(backgroundColor, 0.2),
-              borderLeft: `6px solid ${backgroundColor}`,
-              borderRadius: '6px',
-              padding: '2px 6px',
-              fontSize: '0.75rem',
-              color: '#fff',
-              minHeight: '40px',
-            },
-          };
-        }}
+      eventPropGetter={(event) => {
+  let backgroundColor = '#969696';
+  switch (event.status) {
+    case 1:
+      backgroundColor = '#969696';
+      break;
+    case 2:
+      backgroundColor = '#69AADE';
+      break;
+    case 3:
+      backgroundColor = '#E5C26A';
+      break;
+    case 4:
+      backgroundColor = '#FF5C66';
+      break;
+    case 5:
+      backgroundColor = '#80CF93';
+      break;
+  }
+  return {
+    style: {
+      backgroundColor: hexToRgba(backgroundColor, 0.2),
+      borderLeft: `6px solid ${backgroundColor}`,
+      borderRadius: '6px',
+      padding: '2px 6px',
+      fontSize: '0.75rem',
+      color: '#fff',
+      minHeight: '40px',
+      cursor: 'pointer', // <-- ADD THIS
+    },
+  };
+}}
       />
 
       <BookingDrawer

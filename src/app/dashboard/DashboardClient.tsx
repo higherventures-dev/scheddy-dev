@@ -35,10 +35,14 @@ export default function DashboardClient({
     });
   }, [bookings]);
 
+  const now = new Date();
+  const currentMonth = now.toLocaleString("default", { month: "long" });
+  const currentYear = now.getFullYear();
+
   return (
     <div className="min-h-screen p-6">
       {/* Header */}
-      <header className="mb-6">
+      <header className="mb-6 p-4">
         <h1 className="text-5xl font-bold text-gray-300">
           ${stats.revenue.toLocaleString()}{" "}
           <span className="text-lg align-top ml-1">USD</span>
@@ -46,6 +50,8 @@ export default function DashboardClient({
         <span className="text-xs text-[#808080]">Available balance</span>
       </header>
 
+       <div className="p-4">
+          <h2 className="font-semibold mb-4">{currentMonth} {currentYear} Performance</h2>
       {/* Stats Grid */}
       <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
         <StatCard title="New Clients" value={stats.totalClients} />
@@ -60,7 +66,7 @@ export default function DashboardClient({
         />
         <StatCard title="Revenue" value={`$${stats.revenue.toLocaleString()}`} />
       </section>
-
+              </div>
       {/* Two Column Layout */}
       <div className="grid grid-cols-1">
        

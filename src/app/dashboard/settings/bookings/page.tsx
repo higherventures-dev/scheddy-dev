@@ -24,19 +24,6 @@ export default async function BookingsPage() {
                         />
                 </div>
                 <div className="col-span-4 mb-4">
-                    <div className="py-2">Minimum prior time required</div>
-                    <select className="border rounded p-3 w-[100%]" placeholder="15 minutes" />
-                </div>
-                <div className="col-span-4 mb-4">
-                    <div className="py-4 text-gray-400">Preferences</div>
-                    <SettingsToggle
-                        label="Allow multiple services"
-                        description="Allow clients to book multiple services in a single appointment through online booking."
-                        value={true}
-                        onChange={(val) => {/* update Supabase or form state */}}
-                        />
-                </div>
-                <div className="col-span-4 mb-4">
                     <SettingsToggle
                         label="Automatically confirm every booking"
                         description="When enabled, all new bookings will be automatically confirmed. To confirm bookings manually, simply leave this option disabled."

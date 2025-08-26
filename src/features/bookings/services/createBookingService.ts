@@ -66,6 +66,23 @@ export async function createBooking(data: {
   const start_time = combinedStart;
   const end_time = new Date(start_time.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
 
+  // Step 2: Fetch the artist's profile to check the booking confirmation setting
+  const { data: automaticBookingConfirmations, error: profileError } = await supabase
+    .from('profiles')
+    .select('automatic_booking_confirmations')
+    .eq('id', data.artist_id)
+    .single();
+  
+  if (profileError) {
+    console.error('Error fetching artist profile:', profileError.message);
+    throw profileError;
+  }
+  const bookingStatus = 1;
+  if (automaticBookingConfirmations)
+  {
+    let bookingStatus = 2;
+  } 
+
   // Step 3: Insert booking
   const { data: inserted, error: insertError } = await supabase
     .from('bookings')
@@ -78,7 +95,7 @@ export async function createBooking(data: {
       service_id: data.service_id,
       title: data.title,
       price: data.price,
-      status: data.status,
+      status: bookingStatus,
       studio_id: data.studio_id,
       artist_id: data.artist_id,
       client_id,

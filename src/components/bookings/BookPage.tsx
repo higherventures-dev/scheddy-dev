@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import { createBooking } from '@/features/bookings/services/createBookingService';
+import { formatServicePrice } from '@/lib/utils/formatServicePrice';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
@@ -124,13 +125,17 @@ export default function BookPage({ profile, services }: { profile: any; services
       service_id: selectedService.id,
       title: selectedService.name,
       price: selectedService.price,
+      price2: selectedService.price2,
       status: 1,
       artist_id: profile.id,
       user_id: profile.id,
       selected_date: selectedDate!.toISOString(),
       selected_time: selectedTime,
       start_time: start_time,
-      end_time: end_time
+      end_time: end_time,
+      allow_online_bookings: allow_online_bookings,
+      hide_price_while_booking: selectedService.hide_price_while_booking,
+      price_type: selectedService.price_type,
     };
 
     console.log('Booking Data:', bookingData);
@@ -166,6 +171,10 @@ export default function BookPage({ profile, services }: { profile: any; services
   const displayName = profile.business_name && profile.business_name.trim() !== ''
     ? profile.business_name
     : `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Profile';
+  
+  //set options
+  const allow_online_bookings = profile.allow_online_bookings;
+  const show_cancellation_policy = profile.show_cancellation_policy;
 
   return (
     <div>
@@ -198,30 +207,39 @@ export default function BookPage({ profile, services }: { profile: any; services
         <div className="mb-8">
           <h2 className="mb-4 text-2xl font-bold">Services</h2>
           <ul>
-            {(services || []).map((service: any, index: number) => (
-              <li key={index}>
-                <div className="grid grid-cols-2 items-center gap-4 border-b py-4">
-                  <div>
-                    <div className="text-xs font-medium">{service.name}</div>
-                    <div className="text-xs font-medium text-gray-400">{service.summary}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {service.price ? `$${service.price}` : '$125'} – {convertMinutesToHours(service.duration) || '45 min'}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <button
-                      onClick={() => {
-                        setSelectedService(service);
-                        setIsOpen(true);
-                      }}
-                      className="text-xs border border-gray-400 rounded-md px-3 py-1 hover:bg-gray-100"
-                    >
-                      Book
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
+{(services || []).map((service: any, index: number) => {
+  const formattedPrice = formatServicePrice(service);
+
+  return (
+    <li key={index}>
+      <div className="grid grid-cols-2 items-center gap-4 border-b py-4">
+        <div>
+          <div className="text-xs font-medium">{service.name}</div>
+          <div className="text-xs font-medium text-gray-400">{service.summary}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {/* Show price if not hidden and formattedPrice exists */}
+            {formattedPrice && <span>{formattedPrice} – </span>}
+            {convertMinutesToHours(service.duration) || '45 min'}
+          </div>
+        </div>
+        <div className="text-right">
+          {allow_online_bookings && (
+            <button
+              onClick={() => {
+                setSelectedService(service);
+                setIsOpen(true);
+              }}
+              className="text-xs border border-gray-400 rounded-md px-3 py-1 hover:bg-gray-100"
+            >
+              Book
+            </button>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+})}
+
           </ul>
           {formErrors.selectedService && (
             <p className="text-red-600 text-xs mt-1">{formErrors.selectedService}</p>
@@ -232,7 +250,8 @@ export default function BookPage({ profile, services }: { profile: any; services
           <h2 className="text-2xl font-bold pb-2">About</h2>
           <p className="text-xs">{profile.about || 'Not available.'}</p>
         </div>
-
+        
+           {show_cancellation_policy && (
         <div>
           <h2 className="text-2xl font-bold pb-2">Cancellation Policy</h2>
           <p className="text-xs">
@@ -240,6 +259,7 @@ export default function BookPage({ profile, services }: { profile: any; services
               'Appointments canceled or rescheduled within 24 hours may incur a 50% charge.'}
           </p>
         </div>
+                 )}
       </div>
 
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">

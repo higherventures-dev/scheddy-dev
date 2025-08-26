@@ -19,7 +19,7 @@ export default async function SalesPage() {
      return (
         <main className="p-6">
         {/* <h1 className="text-2xl font-bold mb-4">Welcome back, {profile.first_name}!</h1> */}
-        <div className="text-left w-full"><h1 className="text-xl">Sales</h1></div>
+        <div className="text-left w-full px-3 pb-6"><h1 className="text-xl">Sales</h1></div>
       
         <ArtistsBookingsGrid bookings={bookings} />
         </main>

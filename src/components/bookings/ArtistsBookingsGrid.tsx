@@ -13,7 +13,7 @@
     return (
       <div className="w-full space-y-2 p-1 py-4 text-xs">
         {/* Column Headers */}
-        <div className="grid grid-cols-5 gap-1 font-semibold border-b pb-2 mb-2 text-[#808080]">
+        <div className="grid grid-cols-5 gap-1 font-semibold border-b pb-2 mb-2 px-2 text-[#808080]">
           <div>Status</div>
           <div>Date</div>
           <div>Client</div>

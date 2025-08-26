@@ -330,4 +330,31 @@
 .scheddy-calendar .rbc-time-content{
   padding: 5% 0 0 0 !important;
 }
+
+.scheddy-calendar .rbc-agenda-table{
+  background: none !important;
+  border: 0 !important;
+}
+
+.scheddy-calendar .rbc-agenda-cell {
+  border: 0 !important;
+}
+
+.scheddy-calendar .rbc-agenda-time-cell {
+  border: 0 !important;
+}
+
+.scheddy-calendar .rbc-agenda-event-cell {
+  border: 0 !important;
+}
+
+.scheddy-calendar .rbc-agenda-table tr{
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: none !important;
+}
+
+.scheddy-calendar .rbc-agenda-table td{
+  margin: 0 !important;
+}
 }

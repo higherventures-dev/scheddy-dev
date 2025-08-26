@@ -9,17 +9,19 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { createClient } from '@/utils/supabase/client';
 
 const links = [
-  { name: 'Overview', href: '/dashboard/', icon: HomeIcon },
+  { name: 'Overview', href: '/dashboard', icon: HomeIcon },
   { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
   { name: 'Clients', href: '/dashboard/clients', icon: UserGroupIcon },
   { name: 'Services', href: '/dashboard/services', icon: UserGroupIcon },
   { name: 'Sales', href: '/dashboard/sales', icon: TagIcon },
-  { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
+  // Logout will be handled with a click instead of href
+  { name: 'Logout', icon: UserIcon },
   // ✅ Settings with sub-links
   {
     name: 'Settings',
@@ -36,6 +38,8 @@ const links = [
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
 
   // ✅ Auto-open Settings if current route is a sub-link
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
@@ -45,9 +49,14 @@ export default function Navigation() {
     return currentParent ? currentParent.name : null;
   });
 
-  // ✅ Profile goes to bottom
-  const bottomLink = links.find((link) => link.name === 'Profile');
-  const topLinks = links.filter((link) => link.name !== 'Profile');
+  // ✅ Separate Profile / Logout item
+  const bottomLink = links.find((link) => link.name === 'Logout');
+  const topLinks = links.filter((link) => link.name !== 'Logout');
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/sign-in');
+  };
 
   return (
     <div className="flex flex-col h-full justify-between">
@@ -123,28 +132,18 @@ export default function Navigation() {
         })}
       </div>
 
-      {/* ✅ Bottom pinned Profile */}
+      {/* ✅ Bottom pinned Logout */}
       {bottomLink && (
         <div className="mt-4">
-          {(() => {
-            const isActive = pathname === bottomLink.href;
-            const LinkIcon = bottomLink.icon;
-            return (
-              <Link
-                href={bottomLink.href}
-                className={clsx(
-                  'flex items-center gap-2 rounded-md p-3 text-xs font-medium transition-colors',
-                  {
-                    'bg-white/10 text-[#69AADE]': isActive,
-                    'text-white hover:text-[#69AADE] hover:bg-white/10': !isActive,
-                  }
-                )}
-              >
-                {LinkIcon && <LinkIcon className="w-4" />}
-                <span>{bottomLink.name}</span>
-              </Link>
-            );
-          })()}
+          <button
+            onClick={handleSignOut}
+            className={clsx(
+              'flex items-center gap-2 rounded-md p-3 text-xs font-medium w-full text-left transition-colors hover:text-[#69AADE] hover:bg-white/10 text-white'
+            )}
+          >
+            {bottomLink.icon && <bottomLink.icon className="w-4" />}
+            <span>{bottomLink.name}</span>
+          </button>
         </div>
       )}
     </div>
