@@ -2,28 +2,29 @@
 
 import clsx from 'clsx';
 import { Client } from './ClientsTable';
-import { AddClientForm } from '@/components/forms/clients/AddClientForm';
+import { AddClientForm, ClientFormData } from '@/components/forms/clients/AddClientForm';
 import { EditClientForm } from '@/components/forms/clients/EditClientForm';
 import { ViewClientForm } from '@/components/forms/clients/ViewClientForm';
 import { DeleteClientForm } from '@/components/forms/clients/DeleteClientForm';
-import { ClientFormData } from '@/components/forms/clients/AddClientForm';
 
 interface ClientsDrawerProps {
-  initialData?: Client;
+  initialData?: Client | null;
   onClose: () => void;
-  onSubmit: (data: ClientFormData) => void;
+  onSubmit: (data: ClientFormData) => void | Promise<void>;
   onDelete?: (client: Client) => Promise<void>;
   open: boolean;
   mode?: 'add' | 'edit' | 'view' | 'delete';
+  artistId: string; // ← REQUIRED: thread this from the parent
 }
 
 export function ClientsDrawer({
-  initialData,
+  initialData = null,
   onClose,
   onSubmit,
   onDelete,
   open,
   mode = 'add',
+  artistId,
 }: ClientsDrawerProps) {
   const isView = mode === 'view';
   const isEdit = mode === 'edit';
@@ -38,8 +39,9 @@ export function ClientsDrawer({
       )}
     >
       {/* Backdrop */}
-      <div
+      <button
         onClick={onClose}
+        aria-label="Close"
         className={clsx(
           'absolute inset-0 bg-black/50 transition-opacity duration-700',
           open ? 'opacity-100' : 'opacity-0'
@@ -57,32 +59,48 @@ export function ClientsDrawer({
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold capitalize">
-              {isView && initialData && (initialData.first_name || initialData.last_name)
-                ? `${initialData.first_name ?? ''} ${initialData.last_name ?? ''}`.trim()
-                : null}
+              {isAdd && 'Add Client'}
               {isEdit && initialData && (initialData.first_name || initialData.last_name)
                 ? `${initialData.first_name ?? ''} ${initialData.last_name ?? ''}`.trim()
                 : null}
-              {isAdd && 'Add Client'}
+              {isView && initialData && (initialData.first_name || initialData.last_name)
+                ? `${initialData.first_name ?? ''} ${initialData.last_name ?? ''}`.trim()
+                : null}
               {isDelete && 'Delete Client'}
             </h2>
             <button
               onClick={onClose}
               className="text-gray-300 hover:text-white text-lg"
+              aria-label="Close drawer"
             >
               ✕
             </button>
           </div>
 
-          {/* Conditional Form Rendering */}
+          {/* Body */}
           <div>
-            {isAdd && <AddClientForm onSubmit={onSubmit} />}
+            {isAdd && (
+              <AddClientForm
+                onSubmit={onSubmit}
+                artistId={artistId}     // ← pass it down
+                formId="addClientForm"  // optional: lets a footer button submit via form="addClientForm"
+              />
+            )}
+
             {isEdit && initialData && (
-              <EditClientForm initialData={initialData} onSubmit={onSubmit} />
+              <EditClientForm
+                initialData={initialData}
+                onSubmit={onSubmit}
+              />
             )}
+
             {isView && initialData && (
-              <ViewClientForm initialData={initialData} onClose={onClose} />
+              <ViewClientForm
+                initialData={initialData}
+                onClose={onClose}
+              />
             )}
+
             {isDelete && initialData && onDelete && (
               <DeleteClientForm
                 initialData={initialData}

@@ -17,6 +17,7 @@ export default function Page() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'delete' | 'add'>('add');
+  const [artistId, setArtistId] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = 100;
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -55,6 +56,8 @@ export default function Page() {
         return;
     }
 
+    setArtistId(user.id);
+
     const { data: clients, error: clientsError } = await query;
 
     if (clientsError) {
@@ -92,15 +95,18 @@ export default function Page() {
         return;
       }
 
-      const { error } = await supabase
-        .from('clients')
-        .insert([
-          {
-            ...client,
-            created_by: userData.user.id,
-          },
-        ]);
+      const payload = {
+        ...client,
+        created_by: userData.user.id,
+        // ensure artist_id is set (defensive—form should already include it)
+        artist_id: client.artist_id || userData.user.id,
+        referral_source:
+          client.referral_source && client.referral_source !== ''
+            ? Number(client.referral_source as any)
+            : null,
+      };
 
+      const { error } = await supabase.from('clients').insert([payload]);
       if (error) {
         console.error('Error inserting client:', error);
         return;
@@ -110,27 +116,6 @@ export default function Page() {
     await fetchClientsBasedOnRole();
     handleCloseDrawer();
   };
-
-  async function handleAddClient(clientData: any) {
-    const supabase = createClient();
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData?.user) {
-      console.error('Could not get current user:', userError);
-      return;
-    }
-    console.log("PARENT ARTIST ID", userData.user.id);
-    clientData.artist_id = userData.user.id;
-     if (clientData.referral_source !== null && clientData.referral_source !== undefined && clientData.referral_source !== '') {
-    clientData.referral_source = Number(clientData.referral_source);
-  } else {
-    // If null or empty string, unset or set to null explicitly if your DB accepts it
-    clientData.referral_source = null;
-  }
-
-    await addClient(clientData);
-    setDrawerOpen(false);
-    await fetchClientsBasedOnRole();
-  }
 
   const handleDelete = async (client: Client) => {
     const supabase = createClient();
@@ -148,15 +133,18 @@ export default function Page() {
     setSelectedClient(null);
   };
 
-  const paginated = filtered.length > 0
-    ? filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
-    : [];
+  const paginated =
+    filtered.length > 0
+      ? filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+      : [];
 
   return (
     <div className="p-2 relative">
       <div className="flex flex-col justify-between items-start">
         <div className="w-full flex justify-between items-center py-4">
-          <div className="text-left px-5"><h1 className="text-xl">Clients</h1></div>
+          <div className="text-left px-5">
+            <h1 className="text-xl">Clients</h1>
+          </div>
           <div className="text-right font-bold px-6">
             <button
               onClick={() => {
@@ -164,7 +152,8 @@ export default function Page() {
                 setDrawerMode('add');
                 setDrawerOpen(true);
               }}
-              className="text-xs px-4 py-2 bg-[#313131] text-white rounded-md hover:bg-blue-700"
+              className="text-xs px-4 py-2 bg-[#313131] text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              disabled={!artistId} // avoid opening add form until artistId is known
             >
               + Add Client
             </button>
@@ -233,7 +222,6 @@ export default function Page() {
           </button>
         </div>
       )}
-
       <ClientsDrawer
         open={drawerOpen}
         initialData={selectedClient}
@@ -241,6 +229,7 @@ export default function Page() {
         onSubmit={handleClientSubmit}
         onDelete={handleDelete}
         mode={drawerMode}
+        artistId={artistId ?? ''}  // ← pass it down
       />
     </div>
   );

@@ -1,26 +1,43 @@
 'use client';
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+// Schema: allow empty email, keep artist_id required
 const clientSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  email_address: z.string().email('Invalid email').optional(),
+  email_address: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().email('Invalid email').optional()
+  ),
   phone_number: z.string().optional(),
   phone_number_2: z.string().optional(),
   occupation: z.string().optional(),
-  referral_source: z.string().optional(),
+  referral_source: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().optional()
+  ),
   email_appointment_notification: z.boolean().optional(),
   text_appointment_notification: z.boolean().optional(),
   email_marketing_notification: z.boolean().optional(),
   text_marketing_notification: z.boolean().optional(),
+  artist_id: z.string().min(1, 'Artist is required'),
 });
 
 export type ClientFormData = z.infer<typeof clientSchema>;
 
-export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) => void }) {
+export function AddClientForm({
+  onSubmit,
+  artistId, // <-- supply this from the parent (e.g., the selected artist or current user)
+  formId,   // optional: useful if your submit button lives in a Drawer footer outside the <form>
+}: {
+  onSubmit: (data: ClientFormData) => Promise<void> | void;
+  artistId: string;
+  formId?: string;
+}) {
   const {
     register,
     handleSubmit,
@@ -34,6 +51,7 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
       text_appointment_notification: false,
       email_marketing_notification: false,
       text_marketing_notification: false,
+      artist_id: artistId,
     },
   });
 
@@ -43,7 +61,7 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
     }`;
 
   const formatPhoneNumber = (value: string) => {
-    const digits = value.replace(/\D/g, '');
+    const digits = (value || '').toString().replace(/\D/g, '');
     if (digits.length <= 3) return digits;
     if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
@@ -51,11 +69,25 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
 
   const onSubmitHandler = async (data: ClientFormData) => {
     await onSubmit(data);
-    reset();
+    // Preserve artist_id after reset
+    reset({
+      email_appointment_notification: false,
+      text_appointment_notification: false,
+      email_marketing_notification: false,
+      text_marketing_notification: false,
+      artist_id: artistId,
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmitHandler)} className="space-y-4 text-xs">
+    <form
+      id={formId || 'addClientForm'}
+      onSubmit={handleSubmit(onSubmitHandler)}
+      className="space-y-4 text-xs"
+    >
+      {/* ensure artist_id is registered */}
+      <input type="hidden" {...register('artist_id')} />
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block mb-1">First name</label>
@@ -116,6 +148,7 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
             </p>
           )}
         </div>
+
         <div>
           <label className="block mb-1">Additional phone number</label>
           <Controller
@@ -176,6 +209,7 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
             </p>
           )}
         </div>
+
         <div>
           <label className="block mb-1">Source</label>
           <select
@@ -246,13 +280,21 @@ export function AddClientForm({ onSubmit }: { onSubmit: (data: ClientFormData) =
         </label>
       </div>
 
+      {/* If your submit button is *inside* the form, this is enough. 
+         If it's in a Drawer footer (outside), remove this button and render a
+         <button type="submit" form={formId || 'addClientForm'}> in the footer. */}
       <button
         type="submit"
         disabled={isSubmitting}
         className="bg-white text-black px-4 py-2 rounded text-xs font-semibold"
       >
-        Save Client
+        {isSubmitting ? 'Saving…' : 'Save Client'}
       </button>
+
+      {/* Optional: visibility for any hidden field error */}
+      {errors.artist_id && (
+        <p className="text-red-600 text-xs mt-2">{errors.artist_id.message}</p>
+      )}
     </form>
   );
 }
