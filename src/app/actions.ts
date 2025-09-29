@@ -7,46 +7,42 @@ import { createClient } from '@/utils/supabase/server';
 import { associateUserWithClient } from '@/features/users/services/associateUserWithClient';
 import { encodedRedirect } from '@/utils/utils'; // Make sure this exists
 import { createAdminClient } from '@/utils/supabase/admin'
-
+import { cookies } from 'next/headers';
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
 /** ---------------- SIGN IN ---------------- */
+// src/app/auth/actions.ts
 export async function signInAction(formData: FormData) {
-  const supabase = await createClient();
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
+  const email = String(formData.get('email') ?? '').trim();
+  const password = String(formData.get('password') ?? '');
+
+  const supabase = createServerActionClient({ cookies });
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
   if (error || !data?.user) {
     return redirect(`/auth/sign-in?error=${encodeURIComponent(error?.message || 'No user')}`);
   }
 
   const userId = data.user.id;
-  if (!userId) throw new Error('Missing user ID after login.');
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', userId)
     .single();
 
-  if (profileError || !profile?.role) {
+  if (pErr || !profile?.role) {
     return redirect('/auth/sign-in?error=Missing+user+role');
   }
 
-  const role = profile.role.toLowerCase();
-  switch (role) {
-    case 'client':
-      return redirect('/lounge');
-    case 'artist':
-      return redirect('/dashboard');
-    case 'studio':
-      return redirect('/studio');
-    case 'admin':
-      return redirect('/admin');
-    default:
-      return redirect('/unauthorized');
+  switch (String(profile.role).toLowerCase()) {
+    case 'client':  return redirect('/lounge');
+    case 'artist':  return redirect('/dashboard');
+    case 'studio':  return redirect('/studio');
+    case 'admin':   return redirect('/admin');
+    default:        return redirect('/unauthorized');
   }
 }
+
 
 /** ---------------- SIGN UP (DEFAULT) ---------------- */
 export const signUpAction = async (formData: FormData) => {

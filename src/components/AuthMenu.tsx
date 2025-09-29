@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, MessageSquare, User, LogOut, Calendar } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
@@ -29,25 +30,44 @@ export default function AuthMenu() {
 
   if (!user) return null;
 
-  // Icon button component for small rounded rectangles with optional count badge and tooltip
+  // Icon button with optional link (href). Keeps badge + tooltip.
   const IconButton = ({
     icon: Icon,
     count,
     label,
     onClick,
+    href,              // <— NEW: if provided, renders a Link instead of button
+    target,
+    rel,
   }: {
     icon: typeof Bell;
     count?: number;
     label: string;
     onClick?: () => void;
+    href?: string;
+    target?: string;
+    rel?: string;
   }) => (
     <div className="relative group">
-      <button
-        onClick={onClick}
-        className="w-10 h-8 rounded-md bg-[#313131] flex items-center justify-center text-white hover:bg-gray-600 transition relative"
-      >
-        <Icon className="w-4 h-4" />
-      </button>
+      {href ? (
+        <Link
+          href={href}
+          target={target}
+          rel={rel}
+          aria-label={label}
+          className="w-10 h-8 rounded-md bg-[#313131] inline-flex items-center justify-center text-white hover:bg-gray-600 transition relative"
+        >
+          <Icon className="w-4 h-4" />
+        </Link>
+      ) : (
+        <button
+          onClick={onClick}
+          aria-label={label}
+          className="w-10 h-8 rounded-md bg-[#313131] flex items-center justify-center text-white hover:bg-gray-600 transition relative"
+        >
+          <Icon className="w-4 h-4" />
+        </button>
+      )}
 
       {/* Count badge */}
       {count && count > 0 && (
@@ -65,18 +85,18 @@ export default function AuthMenu() {
 
   return (
     <div className="flex items-center gap-3">
-
-
       {/* Messages and Notifications */}
       <IconButton icon={MessageSquare} count={messagesCount} label="Messages" />
       <IconButton icon={Bell} count={notificationsCount} label="Notifications" />
 
-      {/* Profile */}
-      <IconButton icon={User} label="Profile" />
+      {/* Profile → now links to /dashboard/profile */}
+      <IconButton icon={User} label="Profile" href="/dashboard/profile" />
 
-     
+      {/* (Optional) Calendar example showing counts + link */}
+      {/* <IconButton icon={Calendar} count={appointmentsCount} label="Calendar" href="/dashboard/calendar" /> */}
 
-
+      {/* (Optional) Sign out as an action button */}
+      {/* <IconButton icon={LogOut} label="Sign out" onClick={handleSignOut} /> */}
     </div>
   );
 }

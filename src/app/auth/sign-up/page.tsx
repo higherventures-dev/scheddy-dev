@@ -66,7 +66,7 @@ export default async function Signup(props: {
           </SubmitButton>
     <p className="text-sm text-center text-foreground">
           Already have an account?{" "}
-          <Link className="text-primary font-medium underline" href="/sign-in">
+          <Link className="text-primary font-medium underline" href="/auth/sign-in">
             Sign in
           </Link>
         </p>

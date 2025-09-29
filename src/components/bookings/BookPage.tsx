@@ -223,7 +223,7 @@ export default function BookPage({ profile, services }: { profile: any; services
           </div>
         </div>
         <div className="text-right">
-          {allow_online_bookings && (
+          {(
             <button
               onClick={() => {
                 setSelectedService(service);

@@ -1,7 +1,6 @@
 export function formatServicePrice(service: any) {
   if (service.hide_price_while_booking || service.price_type === 6) return null;
 
-  console.log("PRICE TYPE", service.price_type);
   switch (service.price_type) {
     case 1: // Display as is
       return service.price ? `$${service.price}` : '$125';

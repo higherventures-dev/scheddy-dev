@@ -32,6 +32,10 @@ const links = [
         name: 'Calendar',
         href: '/dashboard/settings/calendar',
       },
+      {
+        name: 'Integrations',
+        href: '/dashboard/settings/integrations',
+      },
     ],
   },
 ];

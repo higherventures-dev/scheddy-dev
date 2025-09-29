@@ -1,8 +1,50 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/client';
+import { cookies } from 'next/headers';
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
 import { sendBookingConfirmationEmail } from '@/features/bookings/services/sendBookingConfirmationEmail';
-import { createClientService } from '@/features/clients/services/createClientService'; // make sure this name matches the actual export
+import { createClientService } from '@/features/clients/services/createClientService';
+import { syncGoogleForBooking } from '@/lib/google/bookingSync';
+
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string; code?: string; details?: string | null; hint?: string | null };
+
+const TZ_DEFAULT = 'America/Los_Angeles'; // adjust if you store per-artist tz
+
+function toPlainError(e: any): ActionResult<never> {
+  return {
+    ok: false,
+    error: e?.message ?? e?.error_description ?? String(e),
+    code: e?.code,
+    details: e?.details ?? null,
+    hint: e?.hint ?? null,
+  };
+}
+
+function logError(prefix: string, e: any) {
+  console.error(prefix, e, JSON.stringify(e, Object.getOwnPropertyNames(e)));
+}
+
+function to24h(t12: string) {
+  const [time, modRaw] = (t12 ?? '02:00 PM').trim().split(' ');
+  let [h, m] = time.split(':');
+  let hh = parseInt(h || '0', 10);
+  const mod = (modRaw || '').toUpperCase();
+  if (mod === 'AM' && hh === 12) hh = 0;
+  if (mod === 'PM' && hh !== 12) hh += 12;
+  return `${String(hh).padStart(2, '0')}:${String(m || '00').padStart(2, '0')}:00`;
+}
+
+function statusNumberToText(n?: number) {
+  switch (n) {
+    case 2: return 'Confirmed';
+    case 3: return 'No-show';
+    case 4: return 'Canceled';
+    case 5: return 'Completed';
+    default: return 'Unconfirmed';
+  }
+}
 
 export async function createBooking(data: {
   first_name: string;
@@ -13,80 +55,69 @@ export async function createBooking(data: {
   service_id: string;
   title: string;
   price: number;
-  status: number;
+  status: number;            // 1..5 (Unconfirmed..Completed)
   studio_id?: string;
-  artist_id: string;
+  artist_id: string;         // the ARTIST who owns the calendar
   client_id?: string;
-  user_id?: string;
-  selected_date?: string;
-  selected_time?: string;
-}) {
-  const supabase = await createClient();
+  user_id?: string;          // creator (artist or customer)
+  selected_date?: string;    // 'YYYY-MM-DD' or ISO
+  selected_time?: string;    // '02:00 PM' etc.
+}): Promise<ActionResult<any>> {
+  try {
+    const supa = createServerActionClient({ cookies });
 
-  // Step 1: Get or create client
-  let client_id = data.client_id;
+    // 0) Basic validation
+    if (!data.artist_id) return { ok: false, error: 'Missing artist_id' };
+    if (!data.title)     return { ok: false, error: 'Missing title' };
 
-  if (!client_id || client_id.length === 0) {
-    client_id = await createClientService({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      phone_number: data.phone_number,
-      email_address: data.email_address,
-      artist_id: data.artist_id,
-      studio_id: data.studio_id,
-    });
-  }
- 
-  const user_id = data.user_id ?? null;
+    // 1) Get or create client
+    let client_id = data.client_id;
+    if (!client_id) {
+      try {
+        client_id = await createClientService({
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone_number: data.phone_number,
+          email_address: data.email_address,
+          artist_id: data.artist_id,
+          studio_id: data.studio_id,
+        });
+      } catch (e: any) {
+        logError('[createBooking] createClientService error:', e);
+        return toPlainError(e);
+      }
+    }
 
-  // Step 2: Parse and combine date/time
-  const DEFAULT_DURATION_MINUTES = 60;
-  const dateString = data.selected_date ?? '2025-08-16T07:00:00.000Z';
-  const timeString = data.selected_time ?? '02:00 PM';
+    // 2) Combine date + time → ISO (UTC)
+    const datePart = (data.selected_date ?? new Date().toISOString()).split('T')[0]; // YYYY-MM-DD
+    const hhmmss = to24h(data.selected_time ?? '02:00 PM');
+    const startLocal = new Date(`${datePart}T${hhmmss}`);
+    if (isNaN(startLocal.getTime())) return { ok: false, error: 'Invalid start time' };
 
-  const selectedDate = new Date(dateString).toISOString().split('T')[0];
+    const DEFAULT_DURATION_MIN = 60;
+    const endLocal = new Date(startLocal.getTime() + DEFAULT_DURATION_MIN * 60 * 1000);
 
-  function convertTo24Hour(time12h: string): string {
-    const [time, modifier] = time12h.split(' ');
-    let [hours, minutes] = time.split(':');
+    const starts_at_iso = startLocal.toISOString();
+    const ends_at_iso   = endLocal.toISOString();
+    if (endLocal <= startLocal) return { ok: false, error: 'End must be after start' };
 
-    if (hours === '12') hours = '00';
-    if (modifier === 'PM') hours = String(parseInt(hours, 10) + 12);
+    // 3) Auto-confirm logic from artist profile
+    const { data: profile, error: profErr } = await supa
+      .from('profiles')
+      .select('automatic_booking_confirmations')
+      .eq('id', data.artist_id)
+      .maybeSingle();
 
-    return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
-  }
+    if (profErr) {
+      logError('[createBooking] profile load error:', profErr);
+      // Non-fatal; continue with provided status
+    }
 
-  const selectedTime24 = convertTo24Hour(timeString);
-  const combinedStart = new Date(`${selectedDate}T${selectedTime24}`);
+    let bookingStatusCode = data.status ?? 1; // default Unconfirmed
+    if (profile?.automatic_booking_confirmations === true) bookingStatusCode = 2; // Confirmed
 
-  if (isNaN(combinedStart.getTime())) {
-    throw new Error('Invalid start time');
-  }
-
-  const start_time = combinedStart;
-  const end_time = new Date(start_time.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
-
-  // Step 2: Fetch the artist's profile to check the booking confirmation setting
-  const { data: automaticBookingConfirmations, error: profileError } = await supabase
-    .from('profiles')
-    .select('automatic_booking_confirmations')
-    .eq('id', data.artist_id)
-    .single();
-  
-  if (profileError) {
-    console.error('Error fetching artist profile:', profileError.message);
-    throw profileError;
-  }
-  const bookingStatus = 1;
-  if (automaticBookingConfirmations)
-  {
-    let bookingStatus = 2;
-  } 
-
-  // Step 3: Insert booking
-  const { data: inserted, error: insertError } = await supabase
-    .from('bookings')
-    .insert([{
+    // 4) Insert booking (RLS-friendly via cookie client)
+    const insertPayload = {
       first_name: data.first_name,
       last_name: data.last_name,
       phone_number: data.phone_number,
@@ -95,25 +126,63 @@ export async function createBooking(data: {
       service_id: data.service_id,
       title: data.title,
       price: data.price,
-      status: bookingStatus,
-      studio_id: data.studio_id,
+      status: bookingStatusCode,        // numeric in DB
+      studio_id: data.studio_id ?? null,
       artist_id: data.artist_id,
-      client_id,
-      user_id,
-      start_time,
-      end_time,
-    }])
-    .select();
+      client_id: client_id,             // ✅ computed client id
+      user_id: data.user_id ?? null,
+      start_time: starts_at_iso,        // recommend timestamptz column
+      end_time: ends_at_iso,
+      timezone: TZ_DEFAULT,             // keep if your table has this column
+    };
 
-  if (insertError) {
-    console.error('Supabase Insert Error:', insertError.message, insertError.details);
-    throw insertError;
+    const { data: inserted, error: insertError } = await supa
+      .from('bookings')
+      .insert([insertPayload])
+      .select('*')
+      .single();
+
+    if (insertError) {
+      logError('[createBooking] insert error:', insertError);
+      return toPlainError(insertError);
+    }
+
+    const booking = inserted;
+
+    // 5) Fire & forget: confirmation email
+    try {
+      await sendBookingConfirmationEmail(data.email_address, data.title, booking);
+    } catch (e) {
+      console.warn('[createBooking] email failed:', (e as Error).message);
+    }
+
+    // 6) Mirror to Google Calendar (artist owns the calendar)
+    try {
+      console.log('[GoogleSync] start', { bookingId: booking.id, artistId: booking.artist_id });
+
+      await syncGoogleForBooking(booking.artist_id, {
+        id: booking.id,
+        user_id: booking.artist_id,                // ✅ the ARTIST who connected Google
+        title: booking.title,
+        description: booking.notes ?? '',
+        location: booking.studio_id ? 'Studio' : '',
+        starts_at: booking.start_time,             // ISO
+        ends_at: booking.end_time,                 // ISO
+        timezone: booking.timezone || TZ_DEFAULT,
+        status: statusNumberToText(booking.status) as any, // 'Unconfirmed' | 'Confirmed' | ...
+        customer_email: booking.email_address ?? null,
+        customer_name: `${booking.first_name} ${booking.last_name}`.trim(),
+      });
+
+      console.log('[GoogleSync] done');
+    } catch (e: any) {
+      // Don’t fail the booking if Google has an issue
+      console.warn('[GoogleSync] failed:', e?.response?.data || e?.message || e);
+    }
+
+    return { ok: true, data: booking };
+  } catch (e: any) {
+    logError('[createBooking] unexpected error:', e);
+    return toPlainError(e);
   }
-
-  const booking = inserted[0];
-
-  // Step 4: Send confirmation email
-  await sendBookingConfirmationEmail(data.email_address, data.title, booking);
-
-  return inserted;
 }

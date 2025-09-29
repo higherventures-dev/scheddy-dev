@@ -117,6 +117,27 @@ export default function Page() {
     handleCloseDrawer();
   };
 
+  async function handleAddClient(clientData: any) {
+    const supabase = createClient();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user) {
+      console.error('Could not get current user:', userError);
+      return;
+    }
+    console.log("PARENT ARTIST ID", userData.user.id);
+    clientData.artist_id = userData.user.id;
+    if (clientData.referral_source !== null && clientData.referral_source !== undefined && clientData.referral_source !== '') {
+    clientData.referral_source = Number(clientData.referral_source);
+  } else {
+    // If null or empty string, unset or set to null explicitly if your DB accepts it
+    clientData.referral_source = null;
+  }
+
+    await addClient(clientData);
+    setDrawerOpen(false);
+    await fetchClientsBasedOnRole();
+}
+
   const handleDelete = async (client: Client) => {
     const supabase = createClient();
     const { error } = await supabase.from('clients').delete().eq('id', client.id);

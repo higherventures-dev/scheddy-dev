@@ -24,7 +24,7 @@ const clientSchema = z.object({
   text_appointment_notification: z.boolean().optional(),
   email_marketing_notification: z.boolean().optional(),
   text_marketing_notification: z.boolean().optional(),
-  artist_id: z.string().min(1, 'Artist is required'),
+  // artist_id: z.string().min(1, 'Artist is required'),
 });
 
 export type ClientFormData = z.infer<typeof clientSchema>;
