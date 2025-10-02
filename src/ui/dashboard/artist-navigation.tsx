@@ -16,6 +16,7 @@ import { createClient } from '@/utils/supabase/client';
 
 const links = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
+  { name: 'Bookings', href: '/dashboard/bookings', icon: CalendarIcon },
   { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
   { name: 'Clients', href: '/dashboard/clients', icon: UserGroupIcon },
   { name: 'Services', href: '/dashboard/services', icon: UserGroupIcon },
