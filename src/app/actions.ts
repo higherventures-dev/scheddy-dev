@@ -6,7 +6,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { associateUserWithClient } from '@/features/users/services/associateUserWithClient';
 import { encodedRedirect } from '@/utils/utils'; // Make sure this exists
-import { createAdminClient } from '@/utils/supabase/admin'
+import { supabaseAdmin } from '@/utils/supabase/admin'
 import { cookies } from 'next/headers';
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
 /** ---------------- SIGN IN ---------------- */
@@ -41,6 +41,105 @@ export async function signInAction(formData: FormData) {
     case 'admin':   return redirect('/admin');
     default:        return redirect('/unauthorized');
   }
+}
+
+export async function magicLinkAction(formData: FormData) {
+  const email = String(formData.get('email') ?? '').trim();
+  if (!email) {
+    return encodedRedirect('error', '/auth/magic-link', 'Email is required');
+  }
+
+  const origin =
+    (await headers()).get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000';
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    return encodedRedirect('error', '/auth/magic-link', error.message);
+  }
+
+  return encodedRedirect(
+    'success',
+    '/auth/magic-link',
+    'Check your email for a sign-in link.'
+  );
+}
+
+/**
+ * Start phone sign-in by sending an SMS code.
+ * Expects a <form> with a "phone" field (E.164 recommended, e.g. +14155551234).
+ */
+export async function signInWithPhoneAction(formData: FormData) {
+  const phone = String(formData.get('phone') ?? '').trim();
+  if (!phone) {
+    return encodedRedirect('error', '/auth/phone', 'Phone number is required');
+  }
+
+  const origin =
+    (await headers()).get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000';
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithOtp({
+    phone,
+    options: {
+      // If you’re using a callback route:
+      // emailRedirectTo works for email; for phone OTP you typically verify via code form.
+      // But keeping a path for post-submit UX is handy:
+      shouldCreateUser: true,
+      // data: { role: 'client' }, // optional metadata
+    },
+  });
+
+  if (error) {
+    return encodedRedirect('error', '/auth/phone', error.message);
+  }
+
+  // Take the user to a page where they can enter the SMS code
+  return encodedRedirect('success', `/auth/phone/verify?phone=${encodeURIComponent(phone)}`, 'Code sent via SMS');
+}
+
+/**
+ * Verify the SMS code the user received.
+ * Expects "phone" and "code" fields in the form.
+ */
+export async function verifyPhoneOtpAction(formData: FormData) {
+  const phone = String(formData.get('phone') ?? '').trim();
+  const code = String(formData.get('code') ?? '').trim();
+
+  if (!phone || !code) {
+    return encodedRedirect('error', '/auth/phone/verify', 'Phone and code are required');
+  }
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    phone,
+    token: code,
+    type: 'sms',
+  });
+
+  if (error || !data?.session) {
+    return encodedRedirect('error', '/auth/phone/verify', error?.message ?? 'Invalid code');
+  }
+
+  // Optional: look up role and route like your email sign-in flow
+  // const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
+  // const role = profile?.role?.toLowerCase?.();
+
+  // Redirect wherever successful auth should land:
+  return encodedRedirect('success', '/dashboard', 'Signed in with phone');
 }
 
 
@@ -92,7 +191,7 @@ export const signUpActionClient = async (formData: FormData) => {
   }
 
   const origin = (await headers()).get('origin');
-  const supabase = createAdminClient(); // uses SERVICE ROLE key
+ const supabase = supabaseAdmin(); // uses SERVICE ROLE key
 
   // 1️⃣ Create user with admin privileges
   const { data: userData, error: userError } = await supabase.auth.admin.createUser({
