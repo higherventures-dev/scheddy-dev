@@ -4,14 +4,30 @@ import clsx from 'clsx';
 import { XCircleIcon } from '@heroicons/react/24/outline';
 import { ViewBookingForm } from '@/components/forms/bookings/ViewBookingForm';
 import { Booking, BookingFormData } from '@/types/booking'; // Adjust types
-import { Fragment } from 'react';
+
+// Minimal shape the parent calendar expects back for Google sync
+type BookingForSync = {
+  id: string;
+  user_id: string;
+  status: number;
+  start_time: string | Date;
+  end_time: string | Date;
+  title: string;
+  description?: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  email_address?: string;
+  price?: number;
+};
 
 interface BookingDrawerProps {
   initialData?: Booking;
-  onClose: (shouldRefresh?: boolean) => void; // <-- supports refresh flag
+  onClose: (shouldRefresh?: boolean) => void; // supports refresh flag
   onSubmit?: (data: BookingFormData) => void;
   open: boolean;
   mode?: 'add' | 'edit' | 'view' | 'delete';
+  onSaved?: (updated: BookingForSync) => void; // <-- ADDED
 }
 
 export function BookingDrawer({
@@ -20,6 +36,7 @@ export function BookingDrawer({
   onSubmit,
   open,
   mode = 'view',
+  onSaved, // <-- ADDED
 }: BookingDrawerProps) {
   return (
     <div className="fixed inset-0 z-50 flex pointer-events-none">
@@ -56,6 +73,7 @@ export function BookingDrawer({
               bookingId={initialData.id}
               onClose={onClose} // receives shouldRefresh flag
               onRefresh={() => onSubmit?.(initialData)}
+              onSaved={onSaved} // <-- PASSED THROUGH
             />
           )}
         </div>

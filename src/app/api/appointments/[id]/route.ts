@@ -1,6 +1,6 @@
 // app/api/appointments/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabase } from "@/lib/supabase/client";
 import { upsertGoogleEvent, deleteGoogleEvent } from "@/lib/googleSync";
 
 export const dynamic = "force-dynamic"; // avoids any static caching for safety
@@ -10,7 +10,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await supabase
     .from("appointments")
     .select("*")
     .eq("id", params.id)
@@ -27,7 +27,7 @@ export async function PATCH(
 ) {
   const body = await req.json();
 
-  const { data: appt, error } = await supabaseAdmin
+  const { data: appt, error } = await supabase
     .from("appointments")
     .update({
       title: body.title,
@@ -71,13 +71,13 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { data: appt } = await supabaseAdmin
+  const { data: appt } = await supabase
     .from("appointments")
     .select("id, staff_user_id")
     .eq("id", params.id)
     .single();
 
-  await supabaseAdmin
+  await supabase
     .from("appointments")
     .update({ status: "CANCELLED", cancelled_at: new Date().toISOString() })
     .eq("id", params.id);

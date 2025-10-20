@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
+import SmsConsentInline from "@/components/sms/consentinline";
 
 export default async function Signup(props: {
   searchParams: Promise<Message>;
@@ -20,56 +21,107 @@ export default async function Signup(props: {
   }
 
   return (
-    <><br></br><br></br>
-      <form className="flex flex-col min-w-64 max-w-64 mx-auto border rounded-xl p-10 w-full max-w-md mx-auto shadow">
-        <h1 className="text-2xl font-medium text-center">Create Your Scheddy Account</h1>
-<br></br>
-        
-  <div className="flex gap-4">
-    <div className="w-1/2">
-     <Label htmlFor="firstname">First Name</Label>
-          <Input name="firstname" required />
-    </div>
-    <div className="w-1/2">
-          <Label htmlFor="lastname">Last Name</Label>
-          <Input name="lastname" required />
-    </div>
-  </div>
-        <div className="flex flex-col gap-4 [&>input]:mb-3 mt-8">
-          {/* <select
-            name="role"
-            id="role"
-            required
-            className="border px-2 py-1 rounded w-full text-sm"
-          >
-            <option value="">Choose your role</option>
-            <option value="artist">Artist</option>
-            <option value="studio">Studio</option>
-            <option value="customer">Client</option>
-            <option value="admin">Admin</option>
-          </select> */}
+    <>
+      <br />
+      <br />
+      <form
+        className="
+          flex flex-col min-w-64 border border-bg-[#1c1c1c] rounded-xl p-8 w-full max-w-md mx-auto shadow text-xs
+          bg-black
+          [&_label]:text-xs
+          [&_input]:bg-[#1C1C1C]
+          [&_input]:text-sm
+          [&_input::placeholder]:text-xs
+          [&_input]:text-white
+          [&_input::placeholder]:text-white/60
+          [&_input]:border-0
+          [&_input]:ring-0
+          [&_input]:focus-visible:ring-2
+          [&_input]:focus-visible:ring-primary/40
+          [&_input]:rounded-lg
+          [&_input]:px-2.5
+          [&_input]:py-1
+        "
+      >
+        <h1 className="text-xl font-medium text-center text-white">scheddy</h1>
+        <h4 className="text-[11px] text-center text-white/80">
+          Create your account below.
+        </h4>
 
-          <Label htmlFor="email">Email</Label>
-          <Input name="email" placeholder="you@example.com" required />
+        <div className="flex flex-col gap-3 mt-6">
+          <div className="flex gap-3">
+            <div className="w-1/2 space-y-1">
+              <Label htmlFor="firstname" className="text-white/90">
+                First Name
+              </Label>
+              <Input id="firstname" name="firstname" autoComplete="given-name" required />
+            </div>
 
-          <Label htmlFor="password">Password</Label>
-          <Input
-            type="password"
-            name="password"
-            placeholder="Your password"
-            minLength={6}
-            required
-          />
+            <div className="w-1/2 space-y-1">
+              <Label htmlFor="lastname" className="text-white/90">
+                Last Name
+              </Label>
+              <Input id="lastname" name="lastname" autoComplete="family-name" required />
+            </div>
+          </div>
+
+          <div className="w-full space-y-1">
+            <Label htmlFor="phone" className="text-white/90">
+              Phone
+            </Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              placeholder="(555) 555-5555"
+              autoComplete="tel"
+            />
+          </div>
+
+          <div className="w-full space-y-1">
+            <Label htmlFor="email" className="text-white/90">
+              Email
+            </Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@scheddy.us"
+              autoComplete="email"
+              required
+            />
+          </div>
+
+          <div className="w-full space-y-1">
+            <Label htmlFor="password" className="text-white/90">
+              Password
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Your password"
+              minLength={6}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+
+          {/* --- SMS consent (phone + checkbox + links) --- */}
+          <SmsConsentInline />
 
           <SubmitButton formAction={signUpAction} pendingText="Signing up...">
             Sign up
           </SubmitButton>
-    <p className="text-sm text-center text-foreground">
-          Already have an account?{" "}
-          <Link className="text-primary font-medium underline" href="/auth/sign-in">
-            Sign in
-          </Link>
-        </p>
+
+          <p className="text-xs text-center text-white/80">
+            Already have an account?{" "}
+            <Link className="text-primary font-medium underline" href="/auth/sign-in">
+              Sign in
+            </Link>
+          </p>
+
           <FormMessage message={searchParams} />
         </div>
       </form>

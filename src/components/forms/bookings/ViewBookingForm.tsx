@@ -12,11 +12,25 @@ import { formatPhoneNumber } from '@/lib/utils/formatPhoneNumber';
 
 interface ViewBookingFormProps {
   bookingId: string;
-  onClose: (shouldRefresh?: boolean) => void; // <-- pass true to refresh parent
+  onClose: (shouldRefresh?: boolean) => void; // parent decides whether to refresh
   onRefresh: () => void;
+  onSaved?: (updated: {
+    id: string;
+    user_id: string;
+    status: number;
+    start_time: string | Date;
+    end_time: string | Date;
+    title: string;
+    description?: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+    email_address?: string;
+    price?: number;
+  }) => void; // <-- added
 }
 
-export function ViewBookingForm({ bookingId, onClose, onRefresh }: ViewBookingFormProps) {
+export function ViewBookingForm({ bookingId, onClose, onRefresh, onSaved }: ViewBookingFormProps) {
   const [booking, setBooking] = useState<any>(null);
   const [selectedStatus, setSelectedStatus] = useState<StatusOption | null>(STATUS_OPTIONS[0]);
   const [loading, setLoading] = useState(false);
@@ -41,13 +55,39 @@ export function ViewBookingForm({ bookingId, onClose, onRefresh }: ViewBookingFo
     setMessage('');
 
     try {
-      const res = await updateBookingStatus(bookingId, selectedStatus.value);
+      // Update status in DB
+      const res: any = await updateBookingStatus(bookingId, selectedStatus.value);
       if (res?.error) throw new Error(res.error.message);
 
-      setBooking((prev: any) => ({ ...prev, status: selectedStatus.value }));
+      // Prefer updated row from service, else stitch from local state
+      const updatedRow =
+        res?.data ??
+        {
+          ...booking,
+          status: selectedStatus.value,
+        };
 
-      // ✅ Close drawer and refresh parent
-      onClose(true); // pass true to trigger refresh
+      // Keep local state consistent for any inline UI
+      setBooking(updatedRow);
+
+      // 🔔 Notify parent so it can sync to Google + refresh calendar
+      onSaved?.({
+        id: updatedRow.id,
+        user_id: updatedRow.user_id,
+        status: updatedRow.status,
+        start_time: updatedRow.start_time,
+        end_time: updatedRow.end_time,
+        title: updatedRow.title,
+        description: updatedRow.notes || '',
+        first_name: updatedRow.first_name,
+        last_name: updatedRow.last_name,
+        phone_number: updatedRow.phone_number,
+        email_address: updatedRow.email_address,
+        price: updatedRow.price,
+      });
+
+      // Close drawer. We pass false to avoid double-refresh since onSaved will refresh.
+      onClose(false);
     } catch (err: any) {
       setMessage(err.message || 'Failed to update booking.');
     } finally {
@@ -112,21 +152,23 @@ export function ViewBookingForm({ bookingId, onClose, onRefresh }: ViewBookingFo
         <h2 className="text-sm font-semibold">Notes</h2>
         <div className="text-[#969696]">{notes}</div>
 
+        {message && <div className="text-red-400">{message}</div>}
+
         <div>
           <button
-  onClick={handleSave}
-  className="px-4 py-2 bg-gray-600 text-white text-xs rounded hover:bg-[#E5C26A] mr-4"
-  disabled={loading}
->
-  {loading ? 'Saving...' : 'Save'}
-</button>
+            onClick={handleSave}
+            className="px-4 py-2 bg-gray-600 text-white text-xs rounded hover:bg-[#E5C26A] mr-4"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save'}
+          </button>
 
-<button
-  onClick={onClose}
-  className="px-4 py-2 bg-gray-300 text-black text-xs rounded hover:bg-gray-400"
->
-  Cancel
-</button>
+          <button
+            onClick={() => onClose(false)}
+            className="px-4 py-2 bg-gray-300 text-black text-xs rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>

@@ -133,14 +133,14 @@ export default function AddBookingDrawer({
         selected_time: selectedTime,
         start_time: start,
         end_time: end,
-        allow_online_bookings: true, // if you need to echo profile flags, pass them via props
+        allow_online_bookings: true,
         hide_price_while_booking: selectedService.hide_price_while_booking,
         price_type: selectedService.price_type,
       }
 
       await createBooking(bookingData)
-      onOpenChange(false) // close + reset
-      router.refresh()    // refresh grid
+      onOpenChange(false)
+      router.refresh()
     } catch (err) {
       console.error(err)
       setErrors((prev) => ({ ...prev, submit: 'There was an issue creating the booking.' }))
@@ -152,166 +152,189 @@ export default function AddBookingDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
-        <Button className="text-xs px-4 py-2 bg-[#313131] text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+        <Button className="text-[11px] px-3 py-1.5 h-8 bg-[#313131] text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
           + Add Booking
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full sm:max-w-lg">
-        <SheetHeader>
-          <SheetTitle>{step === 1 ? 'Select a Service' : 'New Booking'}</SheetTitle>
-          <SheetDescription>
+      {/* Smaller typography + scrollable layout */}
+      <SheetContent
+        side="right"
+        className="
+          w-full sm:max-w-lg p-0
+          flex flex-col h-dvh max-h-dvh [height:100svh]
+          text-[12px] leading-tight
+        "
+      >
+        {/* Header (small) */}
+        <SheetHeader className="p-4 sticky top-0 z-10 bg-background border-b">
+          <SheetTitle className="text-sm font-semibold">
+            {step === 1 ? 'Select a Service' : 'New Booking'}
+          </SheetTitle>
+          <SheetDescription className="text-[11px]">
             {step === 1
               ? 'Choose a service to start the booking.'
               : 'Review the service and enter client details to confirm.'}
           </SheetDescription>
         </SheetHeader>
 
-        {/* STEP INDICATOR */}
-        <div className="mt-4 mb-6 flex items-center gap-2 text-xs">
-          <span className={`px-2 py-1 rounded ${step === 1 ? 'bg-white text-black' : 'bg-muted'}`}>1. Service</span>
-          <span>›</span>
-          <span className={`px-2 py-1 rounded ${step === 2 ? 'bg-white text-black' : 'bg-muted'}`}>2. Details</span>
-        </div>
+        {/* Scrollable body */}
+        <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          {/* STEP INDICATOR */}
+          <div className="mb-4 flex items-center gap-2 text-[11px]">
+            <span className={`px-2 py-0.5 rounded ${step === 1 ? 'bg-white text-black' : 'bg-muted'}`}>1. Service</span>
+            <span>›</span>
+            <span className={`px-2 py-0.5 rounded ${step === 2 ? 'bg-white text-black' : 'bg-muted'}`}>2. Details</span>
+          </div>
 
-        {/* STEP 1: SERVICES LIST */}
-        {step === 1 && (
-          <div className="space-y-3">
-            {(services || []).length === 0 && (
-              <div className="text-xs text-gray-400">No services found for this artist.</div>
-            )}
-            <ul className="divide-y divide-[#3a3a3a]">
-              {(services || []).map((service) => {
-                const priceLabel = !service?.hide_price_while_booking ? formatServicePrice(service) : null
-                return (
-                  <li key={service.id} className="py-3">
-                    <div className="grid grid-cols-2 items-center gap-4">
-                      <div>
-                        <div className="text-sm font-medium">{service.name}</div>
-                        {service.summary && (
-                          <div className="text-xs text-gray-400">{service.summary}</div>
-                        )}
-                        <div className="text-[11px] text-gray-500 mt-1">
-                          {priceLabel && <span>{priceLabel} – </span>}
-                          {convertMinutesToHours(service.duration)}
+          {/* STEP 1: SERVICES LIST */}
+          {step === 1 && (
+            <div className="space-y-2">
+              {(services || []).length === 0 && (
+                <div className="text-[11px] text-gray-400">No services found for this artist.</div>
+              )}
+              <ul className="divide-y divide-[#3a3a3a]">
+                {(services || []).map((service) => {
+                  const priceLabel = !service?.hide_price_while_booking ? formatServicePrice(service) : null
+                  return (
+                    <li key={service.id} className="py-2.5">
+                      <div className="grid grid-cols-2 items-center gap-3">
+                        <div>
+                          <div className="text-xs font-medium">{service.name}</div>
+                          {service.summary && (
+                            <div className="text-[11px] text-gray-400">{service.summary}</div>
+                          )}
+                          <div className="text-[10px] text-gray-500 mt-1">
+                            {priceLabel && <span>{priceLabel} – </span>}
+                            {convertMinutesToHours(service.duration)}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Button
+                            variant="outline"
+                            className="text-[11px] h-8 px-3 py-1.5"
+                            onClick={() => pickService(service)}
+                          >
+                            Select
+                          </Button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <Button
-                          variant="outline"
-                          className="text-xs"
-                          onClick={() => pickService(service)}
-                        >
-                          Select
-                        </Button>
-                      </div>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-            {errors.selectedService && (
-              <p className="text-red-600 text-xs mt-1">{errors.selectedService}</p>
-            )}
-          </div>
-        )}
+                    </li>
+                  )
+                })}
+              </ul>
+              {errors.selectedService && (
+                <p className="text-red-600 text-[11px] mt-1">{errors.selectedService}</p>
+              )}
+            </div>
+          )}
 
-        {/* STEP 2: BOOKING FORM */}
-        {step === 2 && selectedService && (
-          <form className="mt-2 space-y-5" onSubmit={handleSubmit} noValidate>
-            {/* Service summary */}
-            <div className="rounded-md border border-[#3a3a3a] p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-sm font-semibold">{selectedService.name}</div>
-                  {!!selectedService.summary && (
-                    <div className="text-xs text-gray-400">{selectedService.summary}</div>
-                  )}
-                  <div className="text-[11px] text-gray-500 mt-1">
-                    {!selectedService.hide_price_while_booking && formatServicePrice(selectedService)} ·{' '}
-                    {convertMinutesToHours(selectedService.duration)}
+          {/* STEP 2: BOOKING FORM */}
+          {step === 2 && selectedService && (
+            <form className="mt-1 space-y-4" onSubmit={handleSubmit} noValidate>
+              {/* Service summary */}
+              <div className="rounded-md border border-[#3a3a3a] p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold">{selectedService.name}</div>
+                    {!!selectedService.summary && (
+                      <div className="text-[11px] text-gray-400">{selectedService.summary}</div>
+                    )}
+                    <div className="text-[10px] text-gray-500 mt-1">
+                      {!selectedService.hide_price_while_booking && formatServicePrice(selectedService)} ·{' '}
+                      {convertMinutesToHours(selectedService.duration)}
+                    </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-[11px] h-8 px-2 py-1"
+                    onClick={() => setStep(1)}
+                  >
+                    Change
+                  </Button>
                 </div>
+              </div>
+
+              {/* Date / Time */}
+              <div className="space-y-3">
+                <div>
+                  <div className="mt-1">
+                    <DatePicker value={selectedDate} onChange={setSelectedDate} />
+                  </div>
+                  {errors.selectedDate && <p className="text-red-600 text-[11px] mt-1">{errors.selectedDate}</p>}
+                </div>
+                <div>
+                  <div className="mt-1">
+                    <ListTimePicker value={selectedTime} onChange={setSelectedTime} />
+                  </div>
+                  {errors.selectedTime && <p className="text-red-600 text-[11px] mt-1">{errors.selectedTime}</p>}
+                </div>
+              </div>
+
+              {/* Client details */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[11px]">First name</Label>
+                  <Input className="text-xs h-8" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  {errors.firstName && <p className="text-red-600 text-[11px] mt-1">{errors.firstName}</p>}
+                </div>
+                <div>
+                  <Label className="text-[11px]">Last name</Label>
+                  <Input className="text-xs h-8" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  {errors.lastName && <p className="text-red-600 text-[11px] mt-1">{errors.lastName}</p>}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-[11px]">Phone number</Label>
+                <Input className="text-xs h-8" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
+                {errors.phoneNumber && <p className="text-red-600 text-[11px] mt-1">{errors.phoneNumber}</p>}
+              </div>
+
+              <div>
+                <Label className="text-[11px]">Email</Label>
+                <Input
+                  className="text-xs h-8"
+                  type="email"
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                />
+                {errors.emailAddress && <p className="text-red-600 text-[11px] mt-1">{errors.emailAddress}</p>}
+              </div>
+
+              <div>
+                <Label className="text-[11px]">Notes</Label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-xs
+                             shadow-sm ring-offset-background placeholder:text-muted-foreground
+                             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                             disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              {errors.submit && <p className="text-red-600 text-[11px]">{errors.submit}</p>}
+
+              <div className="flex justify-between pt-1">
                 <Button
                   type="button"
-                  variant="ghost"
-                  className="text-xs"
+                  variant="outline"
+                  className="text-[11px] h-8 px-3 py-1.5"
                   onClick={() => setStep(1)}
+                  disabled={submitting}
                 >
-                  Change
+                  Back
+                </Button>
+                <Button type="submit" className="text-[11px] h-8 px-3 py-1.5" disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Confirm Booking'}
                 </Button>
               </div>
-            </div>
-
-            {/* Date / Time */}
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="date">Date</Label>
-                <div className="mt-1">
-                  <DatePicker value={selectedDate} onChange={setSelectedDate} />
-                </div>
-                {errors.selectedDate && <p className="text-red-600 text-xs mt-1">{errors.selectedDate}</p>}
-              </div>
-              <div>
-                <Label htmlFor="time">Time</Label>
-                <div className="mt-1">
-                  <ListTimePicker value={selectedTime} onChange={setSelectedTime} />
-                </div>
-                {errors.selectedTime && <p className="text-red-600 text-xs mt-1">{errors.selectedTime}</p>}
-              </div>
-            </div>
-
-            {/* Client details */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>First name</Label>
-                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                {errors.firstName && <p className="text-red-600 text-xs mt-1">{errors.firstName}</p>}
-              </div>
-              <div>
-                <Label>Last name</Label>
-                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                {errors.lastName && <p className="text-red-600 text-xs mt-1">{errors.lastName}</p>}
-              </div>
-            </div>
-
-            <div>
-              <Label>Phone number</Label>
-              <Input value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
-              {errors.phoneNumber && <p className="text-red-600 text-xs mt-1">{errors.phoneNumber}</p>}
-            </div>
-
-            <div>
-              <Label>Email</Label>
-              <Input type="email" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} />
-              {errors.emailAddress && <p className="text-red-600 text-xs mt-1">{errors.emailAddress}</p>}
-            </div>
-
-            <div>
-              <Label>Notes</Label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-                           shadow-sm ring-offset-background placeholder:text-muted-foreground
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-                           disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
-
-            {errors.submit && <p className="text-red-600 text-xs">{errors.submit}</p>}
-
-            <div className="flex justify-between pt-1">
-              <Button type="button" variant="outline" onClick={() => setStep(1)} disabled={submitting}>
-                Back
-              </Button>
-              <Button type="submit" disabled={submitting}>
-                {submitting ? 'Saving…' : 'Confirm Booking'}
-              </Button>
-            </div>
-          </form>
-        )}
+            </form>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   )

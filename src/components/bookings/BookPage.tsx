@@ -3,29 +3,34 @@
 import { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { createBooking } from '@/features/bookings/services/createBookingService';
 import { formatServicePrice } from '@/lib/utils/formatServicePrice';
 import 'react-time-picker/dist/TimePicker.css';
 import 'react-clock/dist/Clock.css';
 import ListTimePicker from '@/components/ui/ListTimePicker';
 import DatePicker from '@/components/ui/DatePicker';
-import ArtistGallery from "@/components/bookings/ArtistGallery";
+import ArtistGallery from '@/components/bookings/ArtistGallery';
+import { syncBookingToGoogle } from '@/features/google/syncBooking';
 
 function convertMinutesToHours(minutes: number): string {
   const hrs = Math.floor(minutes / 60);
   const mins = minutes % 60;
-
   if (hrs && mins) return `${hrs} hours | ${mins} mins`;
   if (hrs) return `${hrs} hours`;
   return `${mins} mins`;
 }
 
+// build a Date in LOCAL time from a date and "HH:mm" string
+function buildLocalDateTime(date: Date, hhmm: string) {
+  const [hh, mm] = hhmm.split(':').map(Number);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm, 0, 0);
+}
+
 export default function BookPage({ profile, services }: { profile: any; services: any[] }) {
   const router = useRouter();
   const params = useParams();
-  const slug = params?.slug;
+  const slug = params?.slug as string | undefined;
 
   if (!profile) {
     return <div className="text-center text-sm p-10">No profile found.</div>;
@@ -33,17 +38,13 @@ export default function BookPage({ profile, services }: { profile: any; services
 
   const formatAddress = (profile: any) => {
     const { address, address2, city, state, postal_code } = profile;
-
     if (!address) return 'No address provided';
-
     let line1 = address;
     if (address2) line1 += `, ${address2}`;
-
     let line2 = '';
     if (city) line2 += city;
     if (state) line2 += (line2 ? ', ' : '') + state;
     if (postal_code) line2 += (line2 ? ' ' : '') + postal_code;
-
     return (
       <>
         {line1}
@@ -67,24 +68,16 @@ export default function BookPage({ profile, services }: { profile: any; services
   // Validation errors state
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  // Google reauth banner state
+  const [googleReauthNeeded, setGoogleReauthNeeded] = useState(false);
+
   const validateForm = () => {
     const errors: Record<string, string> = {};
-
-    if (!selectedService) {
-      errors.selectedService = 'Please select a service.';
-    }
-    if (!selectedDate) {
-      errors.selectedDate = 'Please select a date.';
-    }
-    if (!selectedTime || selectedTime.trim() === '') {
-      errors.selectedTime = 'Please select a time.';
-    }
-    if (!firstName.trim()) {
-      errors.firstName = 'First name is required.';
-    }
-    if (!lastName.trim()) {
-      errors.lastName = 'Last name is required.';
-    }
+    if (!selectedService) errors.selectedService = 'Please select a service.';
+    if (!selectedDate) errors.selectedDate = 'Please select a date.';
+    if (!selectedTime || selectedTime.trim() === '') errors.selectedTime = 'Please select a time.';
+    if (!firstName.trim()) errors.firstName = 'First name is required.';
+    if (!lastName.trim()) errors.lastName = 'Last name is required.';
     if (!phoneNumber.trim()) {
       errors.phoneNumber = 'Phone number is required.';
     } else if (!/^\d{10,15}$/.test(phoneNumber.replace(/\D/g, ''))) {
@@ -92,27 +85,28 @@ export default function BookPage({ profile, services }: { profile: any; services
     }
     if (!emailAddress.trim()) {
       errors.emailAddress = 'Email is required.';
-    } else if (
-      !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(emailAddress.trim())
-    ) {
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(emailAddress.trim())) {
       errors.emailAddress = 'Enter a valid email address.';
     }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  // set options
+  const allow_online_bookings = profile.allow_online_bookings;
+  const show_cancellation_policy = profile.show_cancellation_policy;
+
+  // choose calendar + initial sync status
+  const calendarId = profile.google_calendar_id || 'primary';
+  const syncStatus = profile?.auto_confirm_bookings === false ? 'Unconfirmed' : 'Confirmed';
+
   const handleConfirmBooking = async () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm() || !selectedDate) return;
 
     const DEFAULT_DURATION_MINUTES = selectedService?.duration || 60;
 
-    const combinedStart = new Date(
-      `${selectedDate?.toISOString().split('T')[0]}T${selectedTime}`
-    );
-
+    // build from local components to avoid UTC off-by-one
+    const combinedStart = buildLocalDateTime(selectedDate, selectedTime);
     const start_time = combinedStart;
     const end_time = new Date(combinedStart.getTime() + DEFAULT_DURATION_MINUTES * 60 * 1000);
 
@@ -126,10 +120,10 @@ export default function BookPage({ profile, services }: { profile: any; services
       title: selectedService.name,
       price: selectedService.price,
       price2: selectedService.price2,
-      status: 1,
+      status: 1, // internal numeric; 1 = Unconfirmed in your legend
       artist_id: profile.id,
-      user_id: profile.id,
-      selected_date: selectedDate!.toISOString(),
+      user_id: profile.id, // who owns the Google Calendar
+      selected_date: selectedDate.toISOString(),
       selected_time: selectedTime,
       start_time: start_time,
       end_time: end_time,
@@ -138,11 +132,40 @@ export default function BookPage({ profile, services }: { profile: any; services
       price_type: selectedService.price_type,
     };
 
-    console.log('Booking Data:', bookingData);
-    await createBooking(bookingData);
+    const created = await createBooking(bookingData);
+    const bookingId = created?.bookingId || created?.id;
+
+    // Create Google Calendar event
+    if (bookingId) {
+      try {
+        const syncRes = await syncBookingToGoogle({
+          bookingId,
+          userId: profile.id,
+          calendarId,
+          title: selectedService.name,
+          startIso: start_time.toISOString(),
+          endIso: end_time.toISOString(),
+          timezone: 'America/Los_Angeles',
+          status: syncStatus, // 'Confirmed' by default; flips to 'Unconfirmed' if your profile says so
+          description: notes
+            ? `Notes: ${notes}\nClient: ${firstName} ${lastName}\nPhone: ${phoneNumber}\nEmail: ${emailAddress}`
+            : undefined,
+        });
+
+        // If Google requires account reconnect, surface a prompt
+        if (syncRes?.code === 'GOOGLE_REAUTH_REQUIRED') {
+          setGoogleReauthNeeded(true);
+          // Optional: persist across navigation to show a banner on destination
+          // try { sessionStorage.setItem('google_reauth_notice', '1'); } catch {}
+        }
+      } catch (e) {
+        // Don’t block the UX if Google fails; you can toast/log here if desired
+        console.error('Google Calendar sync failed:', e);
+      }
+    }
 
     setIsOpen(false);
-    router.push(`/book/${slug}/thank-you`);
+    if (slug) router.push(`/book/${slug}/thank-you`);
 
     // Reset form
     setSelectedService(null);
@@ -163,21 +186,43 @@ export default function BookPage({ profile, services }: { profile: any; services
     }`;
 
   // Determine logo url with fallback
-  const logoSrc = profile.logo_url && profile.logo_url.trim() !== ''
-    ? profile.logo_url
-    : '/assets/images/business-avatar.png';
+  const logoSrc =
+    profile.logo_url && profile.logo_url.trim() !== ''
+      ? profile.logo_url
+      : '/assets/images/business-avatar.png';
 
   // Determine display name fallback order
-  const displayName = profile.business_name && profile.business_name.trim() !== ''
-    ? profile.business_name
-    : `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Profile';
-  
-  //set options
-  const allow_online_bookings = profile.allow_online_bookings;
-  const show_cancellation_policy = profile.show_cancellation_policy;
+  const displayName =
+    (profile.business_name && profile.business_name.trim() !== ''
+      ? profile.business_name
+      : `${profile.first_name || ''} ${profile.last_name || ''}`.trim()) || 'Profile';
 
   return (
     <div>
+      {/* Reauth banner (toast-style) */}
+      {googleReauthNeeded && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm rounded-md border border-yellow-500 bg-[#2b2b2b] text-white p-3 shadow-lg text-xs">
+          <div className="font-semibold mb-1">Reconnect Google Calendar</div>
+          <div className="opacity-90">
+            Your Google connection has expired. Please reconnect to keep calendar events in sync.
+          </div>
+          <div className="mt-2 flex gap-2">
+            <a
+              href="/settings/integrations/google?reconnect=1"
+              className="inline-block px-2 py-1 rounded bg-white text-black hover:bg-gray-100"
+            >
+              Reconnect
+            </a>
+            <button
+              className="inline-block px-2 py-1 rounded border border-gray-500 hover:bg-[#3a3a3a]"
+              onClick={() => setGoogleReauthNeeded(false)}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Profile Header with logo and display name */}
       <div className="border-b border-[#313131] mt-2 text-center text-xs p-3 flex items-center justify-center gap-2">
         <Image
@@ -186,7 +231,7 @@ export default function BookPage({ profile, services }: { profile: any; services
           width={24}
           height={24}
           className="rounded-full object-cover"
-          unoptimized={true} // Remove if your next.config.js allows remote domains
+          unoptimized={true}
         />
         <span>{displayName}</span>
       </div>
@@ -198,48 +243,40 @@ export default function BookPage({ profile, services }: { profile: any; services
         </div>
 
         <div className="w-full h-[200px] bg-cover bg-center mb-4 rounded-md relative">
-          <ArtistGallery 
-            bucketName="profile-headers" 
-            userId={profile.id}
-          />
+          <ArtistGallery bucketName="profile-headers" userId={profile.id} />
         </div>
 
         <div className="mb-8">
           <h2 className="mb-4 text-2xl font-bold">Services</h2>
           <ul>
-{(services || []).map((service: any, index: number) => {
-  const formattedPrice = formatServicePrice(service);
-
-  return (
-    <li key={index}>
-      <div className="grid grid-cols-2 items-center gap-4 border-b py-4">
-        <div>
-          <div className="text-xs font-medium">{service.name}</div>
-          <div className="text-xs font-medium text-gray-400">{service.summary}</div>
-          <div className="text-xs text-gray-500 mt-1">
-            {/* Show price if not hidden and formattedPrice exists */}
-            {formattedPrice && <span>{formattedPrice} – </span>}
-            {convertMinutesToHours(service.duration) || '45 min'}
-          </div>
-        </div>
-        <div className="text-right">
-          {(
-            <button
-              onClick={() => {
-                setSelectedService(service);
-                setIsOpen(true);
-              }}
-              className="text-xs border border-gray-400 rounded-md px-3 py-1 hover:bg-gray-100"
-            >
-              Book
-            </button>
-          )}
-        </div>
-      </div>
-    </li>
-  );
-})}
-
+            {(services || []).map((service: any, index: number) => {
+              const formattedPrice = formatServicePrice(service);
+              return (
+                <li key={index}>
+                  <div className="grid grid-cols-2 items-center gap-4 border-b py-4">
+                    <div>
+                      <div className="text-xs font-medium">{service.name}</div>
+                      <div className="text-xs font-medium text-gray-400">{service.summary}</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {formattedPrice && <span>{formattedPrice} – </span>}
+                        {convertMinutesToHours(service.duration) || '45 min'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedService(service);
+                          setIsOpen(true);
+                        }}
+                        className="text-xs border border-gray-400 rounded-md px-3 py-1 hover:bg-gray-100"
+                      >
+                        Book
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
           {formErrors.selectedService && (
             <p className="text-red-600 text-xs mt-1">{formErrors.selectedService}</p>
@@ -250,16 +287,16 @@ export default function BookPage({ profile, services }: { profile: any; services
           <h2 className="text-2xl font-bold pb-2">About</h2>
           <p className="text-xs">{profile.about || 'Not available.'}</p>
         </div>
-        
-           {show_cancellation_policy && (
-        <div>
-          <h2 className="text-2xl font-bold pb-2">Cancellation Policy</h2>
-          <p className="text-xs">
-            {profile.cancellation_policy ||
-              'Appointments canceled or rescheduled within 24 hours may incur a 50% charge.'}
-          </p>
-        </div>
-                 )}
+
+        {show_cancellation_policy && (
+          <div>
+            <h2 className="text-2xl font-bold pb-2">Cancellation Policy</h2>
+            <p className="text-xs">
+              {profile.cancellation_policy ||
+                'Appointments canceled or rescheduled within 24 hours may incur a 50% charge.'}
+            </p>
+          </div>
+        )}
       </div>
 
       <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">
@@ -404,7 +441,7 @@ export default function BookPage({ profile, services }: { profile: any; services
             </form>
           </Dialog.Panel>
         </div>
-             </Dialog>
+      </Dialog>
     </div>
   );
 }

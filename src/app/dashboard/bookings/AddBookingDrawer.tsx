@@ -19,39 +19,70 @@ export default function AddBookingDrawer() {
         </Button>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>New Booking</SheetTitle>
-          <SheetDescription>Fill out the details and save to create a booking.</SheetDescription>
-        </SheetHeader>
+      {/* p-0 so we can control header/body/footer spacing */}
+      <SheetContent side="right" className="w-full sm:max-w-md p-0">
+        {/* Make the sheet content a flex column that fills the height */}
+        <div className="flex h-full min-h-0 flex-col">
+          {/* Sticky header so actions stay visible */}
+          <SheetHeader className="p-6 sticky top-0 z-10 bg-[#323232] border-b border-gray-700">
+            <SheetTitle>New Booking</SheetTitle>
+          </SheetHeader>
 
-        {/* You can wire this form up later; for now it just displays */}
-        <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
-          <div className="grid gap-2">
-            <Label htmlFor="clientName">Client Name</Label>
-            <Input id="clientName" name="clientName" placeholder="Jane Doe" />
+          {/* Scrollable body */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-6">
+            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <div className="grid gap-2">
+                <Label htmlFor="clientName">Client Name</Label>
+                <Input id="clientName" name="clientName" placeholder="Jane Doe" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="clientEmail">Client Email</Label>
+                <Input id="clientEmail" name="clientEmail" type="email" placeholder="jane@example.com" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="service">Service</Label>
+                <Input id="service" name="service" placeholder="Tattoo — Half Sleeve" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="startAt">Start Date & Time</Label>
+                <Input id="startAt" name="startAt" type="datetime-local" />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea id="notes" name="notes" rows={4} placeholder="Any special requests or references…" />
+              </div>
+
+              {/* Extra bottom padding so the last field isn't under the footer on small screens */}
+              <div className="pb-24" />
+            </form>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="clientEmail">Client Email</Label>
-            <Input id="clientEmail" name="clientEmail" type="email" placeholder="jane@example.com" />
+          {/* Sticky footer (optional actions) */}
+          <div className="sticky bottom-0 z-10 bg-[#323232] border-t border-gray-700 p-4 flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="text-xs"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="text-xs"
+              onClick={() => {
+                // TODO: submit handler
+                setOpen(false)
+              }}
+            >
+              Save Booking
+            </Button>
           </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="service">Service</Label>
-            <Input id="service" name="service" placeholder="Tattoo — Half Sleeve" />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="startAt">Start Date & Time</Label>
-            <Input id="startAt" name="startAt" type="datetime-local" />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" name="notes" rows={4} placeholder="Any special requests or references…" />
-          </div>
-        </form>
+        </div>
       </SheetContent>
     </Sheet>
   )

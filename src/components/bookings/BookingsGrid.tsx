@@ -23,30 +23,34 @@ type Service = {
 type ViewerRole = 'client' | 'artist' | 'admin' | 'studio'
 
 type Props = {
-  bookings: Booking[]
-  cancelAction: (formData: FormData) => Promise<void>
-  services: Service[]
-  artistProfile: { id: string }
-  viewerRole?: ViewerRole // Edit allowed for 'admin' | 'studio' | 'artist'
+  bookings?: Booking[]                                   // made optional
+  cancelAction?: (formData: FormData) => Promise<void>   // made optional
+  services?: Service[]                                   // made optional
+  artistProfile?: { id: string }                         // made optional
+  viewerRole?: ViewerRole                                // default set below
   onSaveEdit?: (id: string | number, payload: any) => Promise<void>
 }
 
 export default function BookingsGrid({
-  bookings,
+  bookings = [],
   cancelAction,
-  services,
-  artistProfile,
+  services = [],
+  artistProfile = { id: '' },
   viewerRole = 'artist',
   onSaveEdit,
 }: Props) {
+  // normalize defensively
+  const safeBookings = Array.isArray(bookings) ? bookings : []
+  const safeServices = Array.isArray(services) ? services : []
+
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const [drawerAction, setDrawerAction] = React.useState<'View' | 'Edit' | 'Cancel'>('View')
   const [active, setActive] = React.useState<Booking | null>(null)
 
   // Allow Edit for admin, studio, or artist
-  const canEditRole = ['admin', 'studio', 'artist'].includes(viewerRole)
+  const canEditRole = ['admin', 'studio', 'artist'].includes(viewerRole || 'client')
 
-  if (!bookings?.length) {
+  if (!safeBookings.length) {
     return <p className="text-center text-gray-500 mt-8">No upcoming bookings.</p>
   }
 
@@ -57,34 +61,59 @@ export default function BookingsGrid({
         onOpenChange={setDrawerOpen}
         action={drawerAction}
         booking={active ?? null}
-        services={services}
-        artistProfile={artistProfile}
-        cancelAction={cancelAction}
+        services={safeServices}                   // always an array
+        artistProfile={artistProfile ?? { id: '' }} // never undefined
+        cancelAction={cancelAction}               // may be undefined; drawer should guard internally
         canEdit={canEditRole}
         onSaveEdit={onSaveEdit}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
-        {bookings.map((b) => {
-          const startDateTime = new Date(b.start_time)
-          const endDateTime = new Date(b.end_time)
-          const bookingDurationDisplay = getDurationDisplay(b.start_time, b.end_time)
-          const monthAbbr = startDateTime.toLocaleString('default', { month: 'short' }).toUpperCase()
-          const dayOfMonth = startDateTime.getDate()
-          const formattedLongDateWithDay = startDateTime.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })
-          const formattedStartTime = startDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-          const formattedEndTime = endDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        {safeBookings.map((b) => {
+          // Guard dates
+          const startDateTime = b?.start_time ? new Date(b.start_time) : null
+          const endDateTime = b?.end_time ? new Date(b.end_time) : null
 
-          const bookingStatus = getBookingStatusInfo(b.status)
-          const canCancel = b.status === 1 || b.status === 2
+          const bookingDurationDisplay = startDateTime && endDateTime
+            ? getDurationDisplay(b.start_time, b.end_time)
+            : '—'
+
+          const monthAbbr = startDateTime
+            ? startDateTime.toLocaleString('default', { month: 'short' }).toUpperCase()
+            : '—'
+
+          const dayOfMonth = startDateTime ? startDateTime.getDate() : '—'
+
+          const formattedLongDateWithDay = startDateTime
+            ? startDateTime.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })
+            : 'Date TBD'
+
+          const formattedStartTime = startDateTime
+            ? startDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+            : '—'
+
+          const formattedEndTime = endDateTime
+            ? endDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+            : '—'
+
+          const bookingStatus = getBookingStatusInfo(b?.status ?? 0)
+          const canCancel = b?.status === 1 || b?.status === 2
+
+          const safePrice =
+            typeof b?.price === 'number' && !Number.isNaN(b.price)
+              ? b.price.toFixed(2)
+              : '0.00'
+
+          const title = b?.title || 'Untitled Booking'
+          const artistName = [b?.artist?.first_name, b?.artist?.last_name].filter(Boolean).join(' ') || 'Unknown artist'
 
           return (
-            <div key={String(b.id)} className="space-y-2 p-1 py-4 text-xs">
+            <div key={String(b?.id ?? Math.random())} className="space-y-2 p-1 py-4 text-xs">
               <div className="bg-[#3A3A3A] p-4 rounded-lg">
                 {/* Top row: date + status */}
                 <div className="grid grid-cols-6 gap-1">
@@ -130,13 +159,13 @@ export default function BookingsGrid({
                     />
                   </div>
                   <div className="col-span-4 pl-4">
-                    {b.title}
+                    {title}
                     <br />
                     <span className="text-[#808080] text-[90%]">
-                      {b.artist?.first_name} {b.artist?.last_name} - {bookingDurationDisplay}
+                      {artistName} - {bookingDurationDisplay}
                     </span>
                   </div>
-                  <div className="col-span-1 pr-3 text-[90%]">${b.price?.toFixed(2) ?? '0.00'}</div>
+                  <div className="col-span-1 pr-3 text-[90%]">${safePrice}</div>
                 </div>
 
                 {/* Divider + actions row (prevents layout shift) */}
@@ -145,7 +174,7 @@ export default function BookingsGrid({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 px-3 text-[0.65rem]"
+                    className="h-7 px-3 text-[0.65rem] bg-[#313131]"
                     onClick={() => {
                       setActive(b)
                       setDrawerAction('View')
@@ -159,7 +188,7 @@ export default function BookingsGrid({
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="h-7 px-3 text-[0.65rem]"
+                      className="h-7 px-3 text-[0.65rem] bg-[#313131]"
                       onClick={() => {
                         setActive(b)
                         setDrawerAction('Edit')
@@ -174,7 +203,7 @@ export default function BookingsGrid({
                     <Button
                       variant="destructive"
                       size="sm"
-                      className="h-7 px-3 text-[0.65rem]"
+                      className="h-7 px-3 text-[0.65rem] bg-[#313131]"
                       onClick={() => {
                         setActive(b)
                         setDrawerAction('Cancel')

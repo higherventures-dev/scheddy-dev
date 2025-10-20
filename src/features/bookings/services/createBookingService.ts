@@ -1,3 +1,4 @@
+// features/bookings/services/createBookingService.ts
 'use server';
 
 import { cookies } from 'next/headers';
@@ -10,7 +11,7 @@ type ActionResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; code?: string; details?: string | null; hint?: string | null };
 
-const TZ_DEFAULT = 'America/Los_Angeles'; // adjust if you store per-artist tz
+const TZ_DEFAULT = 'America/Los_Angeles'; // set to your app default or per-artist tz
 
 function toPlainError(e: any): ActionResult<never> {
   return {
@@ -23,17 +24,41 @@ function toPlainError(e: any): ActionResult<never> {
 }
 
 function logError(prefix: string, e: any) {
-  console.error(prefix, e, JSON.stringify(e, Object.getOwnPropertyNames(e)));
+  try {
+    console.error(prefix, e, JSON.stringify(e, Object.getOwnPropertyNames(e)));
+  } catch {
+    console.error(prefix, e);
+  }
 }
 
+// Accepts "02:00 PM", "2:00 pm", "14:00", etc. -> "HH:MM:SS"
 function to24h(t12: string) {
-  const [time, modRaw] = (t12 ?? '02:00 PM').trim().split(' ');
-  let [h, m] = time.split(':');
-  let hh = parseInt(h || '0', 10);
-  const mod = (modRaw || '').toUpperCase();
-  if (mod === 'AM' && hh === 12) hh = 0;
-  if (mod === 'PM' && hh !== 12) hh += 12;
-  return `${String(hh).padStart(2, '0')}:${String(m || '00').padStart(2, '0')}:00`;
+  const raw = (t12 ?? '').trim();
+  if (!raw) return '09:00:00'; // default
+  // Already 24h "HH:MM"
+  const m24 = raw.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+  if (m24) return `${m24[1].padStart(2, '0')}:${m24[2]}:00`;
+  // 12h with AM/PM
+  const m12 = raw.toUpperCase().match(/^(\d{1,2}):([0-5]\d)\s*([AP])\.?M?\.?$/);
+  if (m12) {
+    let hh = parseInt(m12[1], 10);
+    const mm = m12[2];
+    const ap = m12[3];
+    if (ap === 'A') { if (hh === 12) hh = 0; }
+    else { if (hh !== 12) hh += 12; }
+    return `${String(hh).padStart(2, '0')}:${mm}:00`;
+  }
+  // fallback with minutes defaulted
+  const short12 = raw.toUpperCase().match(/^(\d{1,2})\s*([AP])\.?M?\.?$/);
+  if (short12) {
+    let hh = parseInt(short12[1], 10);
+    const ap = short12[2];
+    if (ap === 'A') { if (hh === 12) hh = 0; }
+    else { if (hh !== 12) hh += 12; }
+    return `${String(hh).padStart(2, '0')}:00:00`;
+  }
+  // if nothing matched, keep raw; caller will validate
+  return raw;
 }
 
 function statusNumberToText(n?: number) {
@@ -61,7 +86,8 @@ export async function createBooking(data: {
   client_id?: string;
   user_id?: string;          // creator (artist or customer)
   selected_date?: string;    // 'YYYY-MM-DD' or ISO
-  selected_time?: string;    // '02:00 PM' etc.
+  selected_time?: string;    // '02:00 PM' or '14:00'
+  timezone?: string;         // optional; default TZ_DEFAULT
 }): Promise<ActionResult<any>> {
   try {
     const supa = createServerActionClient({ cookies });
@@ -88,9 +114,10 @@ export async function createBooking(data: {
       }
     }
 
-    // 2) Combine date + time → ISO (UTC)
+    // 2) Combine date + time → local Date → ISO (UTC)
+    const artistTz = data.timezone || TZ_DEFAULT;
     const datePart = (data.selected_date ?? new Date().toISOString()).split('T')[0]; // YYYY-MM-DD
-    const hhmmss = to24h(data.selected_time ?? '02:00 PM');
+    const hhmmss = to24h(data.selected_time ?? '09:00 AM');
     const startLocal = new Date(`${datePart}T${hhmmss}`);
     if (isNaN(startLocal.getTime())) return { ok: false, error: 'Invalid start time' };
 
@@ -101,10 +128,10 @@ export async function createBooking(data: {
     const ends_at_iso   = endLocal.toISOString();
     if (endLocal <= startLocal) return { ok: false, error: 'End must be after start' };
 
-    // 3) Auto-confirm logic from artist profile
+    // 3) Pull profile toggles + preferred calendar
     const { data: profile, error: profErr } = await supa
       .from('profiles')
-      .select('automatic_booking_confirmations')
+      .select('automatic_booking_confirmations, google_calendar_id')
       .eq('id', data.artist_id)
       .maybeSingle();
 
@@ -116,7 +143,7 @@ export async function createBooking(data: {
     let bookingStatusCode = data.status ?? 1; // default Unconfirmed
     if (profile?.automatic_booking_confirmations === true) bookingStatusCode = 2; // Confirmed
 
-    // 4) Insert booking (RLS-friendly via cookie client)
+    // 4) Insert booking
     const insertPayload = {
       first_name: data.first_name,
       last_name: data.last_name,
@@ -129,11 +156,11 @@ export async function createBooking(data: {
       status: bookingStatusCode,        // numeric in DB
       studio_id: data.studio_id ?? null,
       artist_id: data.artist_id,
-      client_id: client_id,             // ✅ computed client id
+      client_id: client_id,             // computed client id
       user_id: data.user_id ?? null,
-      start_time: starts_at_iso,        // recommend timestamptz column
-      end_time: ends_at_iso,
-      timezone: TZ_DEFAULT,             // keep if your table has this column
+      start_time: starts_at_iso,        // timestamptz
+      end_time: ends_at_iso,            // timestamptz
+      timezone: artistTz,               // text (IANA tz)
     };
 
     const { data: inserted, error: insertError } = await supa
@@ -149,26 +176,21 @@ export async function createBooking(data: {
 
     const booking = inserted;
 
-    // 5) Fire & forget: confirmation email
+    // 5) Google Calendar sync FIRST (so email failures don't block it)
     try {
-      await sendBookingConfirmationEmail(data.email_address, data.title, booking);
-    } catch (e) {
-      console.warn('[createBooking] email failed:', (e as Error).message);
-    }
-
-    // 6) Mirror to Google Calendar (artist owns the calendar)
-    try {
-      console.log('[GoogleSync] start', { bookingId: booking.id, artistId: booking.artist_id });
+      const calendarId = profile?.google_calendar_id || 'primary';
+      console.log('[GoogleSync] start', { bookingId: booking.id, artistId: booking.artist_id, calendarId });
 
       await syncGoogleForBooking(booking.artist_id, {
         id: booking.id,
-        user_id: booking.artist_id,                // ✅ the ARTIST who connected Google
+        user_id: booking.artist_id,                // the ARTIST who connected Google
+        calendar_id: calendarId,
         title: booking.title,
         description: booking.notes ?? '',
         location: booking.studio_id ? 'Studio' : '',
         starts_at: booking.start_time,             // ISO
         ends_at: booking.end_time,                 // ISO
-        timezone: booking.timezone || TZ_DEFAULT,
+        timezone: booking.timezone || artistTz,
         status: statusNumberToText(booking.status) as any, // 'Unconfirmed' | 'Confirmed' | ...
         customer_email: booking.email_address ?? null,
         customer_name: `${booking.first_name} ${booking.last_name}`.trim(),
@@ -176,8 +198,15 @@ export async function createBooking(data: {
 
       console.log('[GoogleSync] done');
     } catch (e: any) {
-      // Don’t fail the booking if Google has an issue
+      // Do not fail booking on Google issues
       console.warn('[GoogleSync] failed:', e?.response?.data || e?.message || e);
+    }
+
+    // 6) Fire & forget: confirmation email (wrap so SMTP credit errors don't break the flow)
+    try {
+      await sendBookingConfirmationEmail(data.email_address, data.title, booking);
+    } catch (e) {
+      console.warn('[createBooking] email failed:', (e as Error).message);
     }
 
     return { ok: true, data: booking };
