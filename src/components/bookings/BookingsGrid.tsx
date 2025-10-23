@@ -23,11 +23,11 @@ type Service = {
 type ViewerRole = 'client' | 'artist' | 'admin' | 'studio'
 
 type Props = {
-  bookings?: Booking[]                                   // made optional
-  cancelAction?: (formData: FormData) => Promise<void>   // made optional
-  services?: Service[]                                   // made optional
-  artistProfile?: { id: string }                         // made optional
-  viewerRole?: ViewerRole                                // default set below
+  bookings?: Booking[]
+  cancelAction?: (formData: FormData) => Promise<void>
+  services?: Service[]
+  artistProfile?: { id: string }
+  viewerRole?: ViewerRole
   onSaveEdit?: (id: string | number, payload: any) => Promise<void>
 }
 
@@ -61,9 +61,9 @@ export default function BookingsGrid({
         onOpenChange={setDrawerOpen}
         action={drawerAction}
         booking={active ?? null}
-        services={safeServices}                   // always an array
-        artistProfile={artistProfile ?? { id: '' }} // never undefined
-        cancelAction={cancelAction}               // may be undefined; drawer should guard internally
+        services={safeServices}
+        artistProfile={artistProfile ?? { id: '' }}
+        cancelAction={cancelAction}
         canEdit={canEditRole}
         onSaveEdit={onSaveEdit}
       />
@@ -74,9 +74,8 @@ export default function BookingsGrid({
           const startDateTime = b?.start_time ? new Date(b.start_time) : null
           const endDateTime = b?.end_time ? new Date(b.end_time) : null
 
-          const bookingDurationDisplay = startDateTime && endDateTime
-            ? getDurationDisplay(b.start_time, b.end_time)
-            : '—'
+          const bookingDurationDisplay =
+            startDateTime && endDateTime ? getDurationDisplay(b.start_time, b.end_time) : '—'
 
           const monthAbbr = startDateTime
             ? startDateTime.toLocaleString('default', { month: 'short' }).toUpperCase()
@@ -84,12 +83,16 @@ export default function BookingsGrid({
 
           const dayOfMonth = startDateTime ? startDateTime.getDate() : '—'
 
-          const formattedLongDateWithDay = startDateTime
+          // Two-line date display
+          const weekdayFull = startDateTime
+            ? startDateTime.toLocaleDateString('en-US', { weekday: 'long' })
+            : '—'
+
+          const dateLong = startDateTime
             ? startDateTime.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
                 month: 'long',
                 day: 'numeric',
+                year: 'numeric',
               })
             : 'Date TBD'
 
@@ -110,29 +113,41 @@ export default function BookingsGrid({
               : '0.00'
 
           const title = b?.title || 'Untitled Booking'
-          const artistName = [b?.artist?.first_name, b?.artist?.last_name].filter(Boolean).join(' ') || 'Unknown artist'
+          const artistName =
+            [b?.artist?.first_name, b?.artist?.last_name].filter(Boolean).join(' ') ||
+            'Unknown artist'
 
           return (
             <div key={String(b?.id ?? Math.random())} className="space-y-2 p-1 py-4 text-xs">
               <div className="bg-[#3A3A3A] p-4 rounded-lg">
-                {/* Top row: date + status */}
-                <div className="grid grid-cols-6 gap-1">
-                  <div className="col-span-1 rounded border border-gray-600">
-                    <div className="bg-gray-600 text-[70%] text-center">{monthAbbr}</div>
-                    <div className="text-center text-[100%] pt-2 pb-2">{dayOfMonth}</div>
+                {/* Top row: date + status (adjusted size & alignment) */}
+                <div className="grid grid-cols-6 gap-1 items-start">
+                  {/* Date tile: smaller */}
+                  <div className="col-span-1 rounded border border-gray-600 w-12">
+                    <div className="bg-gray-600 text-[60%] leading-none text-center py-1">
+                      {monthAbbr}
+                    </div>
+                    <div className="text-center text-xs py-1.5 leading-none">{dayOfMonth}</div>
                   </div>
 
-                  <div className="col-span-3 pl-4">
-                    {formattedLongDateWithDay}
-                    <br />
-                    <span className="text-[#808080] text-[90%]">
+                  {/* Two-line date + time */}
+                  <div className="col-span-3 pl-3 min-w-0">
+                    <div className="leading-tight">{weekdayFull}</div>
+                    <div className="leading-tight">{dateLong}</div>
+                    <div className="text-[#808080] text-[90%] mt-0.5">
                       {formattedStartTime} - {formattedEndTime}
-                    </span>
+                    </div>
                   </div>
 
-                  <div className="col-span-2 pr-1 text-right flex items-center justify-end gap-2">
+                  {/* Status pill: top-right aligned with tight right spacing */}
+                  <div className="col-span-2 text-right flex items-start justify-end">
                     <span
-                      className="inline-flex items-center rounded-sm px-1"
+                      className="
+                        inline-flex items-center rounded-sm
+                        px-1.5 py-0.5 gap-1
+                        whitespace-nowrap leading-none
+                        self-start
+                      "
                       style={{ backgroundColor: bookingStatus.color || 'transparent' }}
                     >
                       <Image
@@ -140,9 +155,9 @@ export default function BookingsGrid({
                         alt={bookingStatus.name}
                         width={16}
                         height={16}
-                        className="mr-1"
+                        className="shrink-0"
                       />
-                      <span className="text-[90%]">{bookingStatus.name}</span>
+                      <span className="text-[80%] leading-none">{bookingStatus.name}</span>
                     </span>
                   </div>
                 </div>
@@ -168,7 +183,7 @@ export default function BookingsGrid({
                   <div className="col-span-1 pr-3 text-[90%]">${safePrice}</div>
                 </div>
 
-                {/* Divider + actions row (prevents layout shift) */}
+                {/* Divider + actions row */}
                 <hr className="border-[#4a4a4a] mt-4" />
                 <div className="flex items-center justify-end gap-2 pt-3">
                   <Button

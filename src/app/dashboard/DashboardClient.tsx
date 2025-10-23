@@ -43,11 +43,11 @@ export default function DashboardClient({
     <div className="min-h-screen p-6">
       {/* Header */}
       <header className="mb-6 p-4">
-        <h1 className="text-5xl font-bold text-gray-300">
+        <h1 className="text-5xl font-bold text-sky-400/60">
           ${stats.revenue.toLocaleString()}{" "}
           <span className="text-lg align-top ml-1">USD</span>
         </h1>
-        <span className="text-xs text-[#808080]">Available balance</span>
+        <span className="text-xs text-sky-400/60">Available balance</span>
       </header>
 
        <div className="p-4">

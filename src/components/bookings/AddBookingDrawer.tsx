@@ -4,7 +4,13 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+  SheetOverlay, // 👈 add this
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -157,13 +163,18 @@ export default function AddBookingDrawer({
         </Button>
       </SheetTrigger>
 
-      {/* Smaller typography + scrollable layout */}
+      {/* Overlay above header icons */}
+      <SheetOverlay className="fixed inset-0 bg-black/60 z-[95]" />
+
+      {/* Drawer content above everything */}
       <SheetContent
         side="right"
         className="
+          z-[100]
           w-full sm:max-w-lg p-0
           flex flex-col h-dvh max-h-dvh [height:100svh]
           text-[12px] leading-tight
+          bg-[#262626] border-0
         "
       >
         {/* Header (small) */}

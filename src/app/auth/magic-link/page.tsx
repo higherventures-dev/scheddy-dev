@@ -1,27 +1,45 @@
+'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from "next/navigation";
 import { magicLinkAction } from "@/app/actions";
-import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
+import { FormMessage, Message } from "@/components/form-message";
 
-export default async function MagicLink(props: { searchParams: Promise<Message> }) {
-  const searchParams = await props.searchParams;
+export default function MagicLinkClient({
+  message,
+}: { message?: Message }) {
+  const qp = useSearchParams();
+  const prefilled = qp.get('email') ?? '';
+
   return (
-    <div className ="shadow-lg, dark:shadow-x1, border, dark:border-gray-700">
-    <form className="flex-1 flex flex-col min-w-64">
-      <h1 className="text-2xl font-medium">Log In Without Password</h1>
-      <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
-        <Label htmlFor="email">Email</Label>
-        <Input name="email" placeholder="you@example.com" required />
-        <SubmitButton pendingText="Logging In..." formAction={magicLinkAction}>
-          Log in
-        </SubmitButton>
-        <FormMessage message={searchParams} />
-      </div>
-    </form>
+    <div className="shadow-lg dark:shadow-xl border dark:border-gray-700 p-6 rounded-xl max-w-md">
+      <form className="flex-1 flex flex-col min-w-64">
+        <h1 className="text-2xl font-medium">Sign in or create your account</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          Enter your email and we’ll send a magic link. If you’re new, we’ll
+          create your account automatically.
+        </p>
+
+        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-6">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            defaultValue={prefilled}
+            autoFocus
+            required
+            type="email"
+            inputMode="email"
+          />
+          <SubmitButton pendingText="Sending link…" formAction={magicLinkAction}>
+            Send magic link
+          </SubmitButton>
+          <FormMessage message={message} />
+        </div>
+      </form>
     </div>
   );
 }

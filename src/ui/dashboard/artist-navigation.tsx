@@ -6,7 +6,10 @@ import {
   Cog6ToothIcon,
   HomeIcon,
   CalendarIcon,
+  CalendarDaysIcon,
   TagIcon,
+  PencilSquareIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -16,27 +19,20 @@ import { createClient } from '@/utils/supabase/client';
 
 const links = [
   { name: 'Overview', href: '/dashboard', icon: HomeIcon },
-  { name: 'Bookings', href: '/dashboard/bookings', icon: CalendarIcon },
+  { name: 'Bookings', href: '/dashboard/bookings', icon: CalendarDaysIcon }, // ✅ different from Calendar
   { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
   { name: 'Clients', href: '/dashboard/clients', icon: UserGroupIcon },
-  { name: 'Services', href: '/dashboard/services', icon: UserGroupIcon },
+  { name: 'Services', href: '/dashboard/services', icon: PencilSquareIcon }, // ✅ different from Clients
   { name: 'Sales', href: '/dashboard/sales', icon: TagIcon },
-  // Logout will be handled with a click instead of href
+  // Logout handled via click
   { name: 'Logout', icon: UserIcon },
-  // ✅ Settings with sub-links
   {
     name: 'Settings',
     icon: Cog6ToothIcon,
     subLinks: [
       { name: 'Bookings', href: '/dashboard/settings/bookings' },
-      {
-        name: 'Calendar',
-        href: '/dashboard/settings/calendar',
-      },
-      {
-        name: 'Integrations',
-        href: '/dashboard/settings/integrations',
-      },
+      { name: 'Calendar', href: '/dashboard/settings/calendar' },
+      { name: 'Integrations', href: '/dashboard/settings/integrations' },
     ],
   },
 ];
@@ -46,7 +42,6 @@ export default function Navigation() {
   const router = useRouter();
   const supabase = createClient();
 
-  // ✅ Auto-open Settings if current route is a sub-link
   const [openMenu, setOpenMenu] = useState<string | null>(() => {
     const currentParent = links.find((link) =>
       link.subLinks?.some((sub) => pathname.startsWith(sub.href))
@@ -54,7 +49,6 @@ export default function Navigation() {
     return currentParent ? currentParent.name : null;
   });
 
-  // ✅ Separate Profile / Logout item
   const bottomLink = links.find((link) => link.name === 'Logout');
   const topLinks = links.filter((link) => link.name !== 'Logout');
 
@@ -65,11 +59,10 @@ export default function Navigation() {
 
   return (
     <div className="flex flex-col h-full justify-between">
-      {/* Top menu items */}
       <div className="space-y-1">
         {topLinks.map((link) => {
           const isActive = pathname === link.href;
-          const LinkIcon = link.icon;
+          const LinkIcon = link.icon as React.ElementType;
 
           if (link.subLinks) {
             const isOpen = openMenu === link.name;
@@ -121,7 +114,7 @@ export default function Navigation() {
           return (
             <Link
               key={link.name}
-              href={link.href}
+              href={link.href!}
               className={clsx(
                 'flex items-center gap-2 rounded-md p-3 text-xs font-medium transition-colors',
                 {
@@ -137,7 +130,6 @@ export default function Navigation() {
         })}
       </div>
 
-      {/* ✅ Bottom pinned Logout */}
       {bottomLink && (
         <div className="mt-4">
           <button

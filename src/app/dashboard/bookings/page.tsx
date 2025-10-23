@@ -44,11 +44,11 @@ export default async function BookingsPage() {
     <main className="p-6">
       <div className="p-2 relative">
         <div className="flex flex-col justify-between items-start">
-          <div className="w-full flex justify-between items-center py-4">
-            <div className="text-left px-5">
-              <h1 className="text-xl">Bookings</h1>
+          <div className="w-full flex justify-between items-center py-1">
+            <div className="text-left">
+               <h1 className="text-xl mb-6">Bookings</h1>
             </div>
-            <div className="text-right font-bold px-6">
+            <div className="text-right font-bold">
               {/* Header “Create” button: opens the create drawer */}
               <AddBookingDrawer artistProfile={{ id: data.user.id }} services={plainServices} />
             </div>

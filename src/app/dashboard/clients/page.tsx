@@ -163,9 +163,9 @@ export default function Page() {
     <div className="p-2 relative">
       <div className="flex flex-col justify-between items-start">
         <div className="w-full flex justify-between items-center py-4">
-          <div className="text-left px-5">
-            <h1 className="text-xl">Clients</h1>
-          </div>
+          <div className="text-left">
+               <h1 className="text-xl mb-6">Clients</h1>
+            </div>
           <div className="text-right font-bold px-6">
             <button
               onClick={() => {

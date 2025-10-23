@@ -3,7 +3,7 @@
 
 import { cookies } from 'next/headers';
 import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-import { sendBookingConfirmationEmail } from '@/features/bookings/services/sendBookingConfirmationEmail';
+import { sendBookingRequestEmail } from '@/features/bookings/services/sendBookingRequestEmail';
 import { createClientService } from '@/features/clients/services/createClientService';
 import { syncGoogleForBooking } from '@/lib/google/bookingSync';
 
@@ -204,7 +204,7 @@ export async function createBooking(data: {
 
     // 6) Fire & forget: confirmation email (wrap so SMTP credit errors don't break the flow)
     try {
-      await sendBookingConfirmationEmail(data.email_address, data.title, booking);
+      await sendBookingRequestEmail(data.email_address, data.title, booking);
     } catch (e) {
       console.warn('[createBooking] email failed:', (e as Error).message);
     }

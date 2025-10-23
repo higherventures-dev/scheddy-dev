@@ -4,7 +4,12 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetOverlay, // 👈 ensure this is exported from your shadcn sheet
 } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -60,7 +65,6 @@ function buildLocalDateTime(date: Date, hhmm: string) {
 }
 
 function mapNumericStatusToScheddyStatus(n: number): ScheddyStatus {
-  // 1: Unconfirmed, 2: Confirmed, 3: No-show, 4: Canceled, 5: Completed
   switch (n) {
     case 2: return 'Confirmed'
     case 3: return 'No-show'
@@ -74,7 +78,7 @@ export default function BookingActionDrawer({
   open,
   onOpenChange,
   action,
-  booking,                 // now optional
+  booking,
   services,
   artistProfile,
   cancelAction,
@@ -93,7 +97,6 @@ export default function BookingActionDrawer({
 }) {
   const router = useRouter()
 
-  // Form state (for View/Edit)
   const [serviceId, setServiceId] = React.useState<string>('')
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = React.useState('')
@@ -105,7 +108,6 @@ export default function BookingActionDrawer({
   const [err, setErr] = React.useState('')
   const [saving, setSaving] = React.useState(false)
 
-  // Hydrate only when open AND booking exist
   React.useEffect(() => {
     if (!open || !booking) return
     setServiceId(booking.service_id ?? '')
@@ -127,7 +129,8 @@ export default function BookingActionDrawer({
   const selectedService =
     services.find(s => s.id === (serviceId || booking?.service_id || '')) || null
 
-  const missingBooking = open && !booking && (action === 'View' || action === 'Edit' || action === 'Cancel')
+  const missingBooking =
+    open && !booking && (action === 'View' || action === 'Edit' || action === 'Cancel')
 
   async function handleEditSave(e: React.FormEvent) {
     e.preventDefault()
@@ -138,7 +141,6 @@ export default function BookingActionDrawer({
       setSaving(true)
       const svc = services.find(s => s.id === serviceId) || null
 
-      // ✅ build local datetime to avoid UTC off-by-one
       const start = selectedDate
         ? buildLocalDateTime(selectedDate, selectedTime || '09:00')
         : new Date(booking.start_time)
@@ -174,7 +176,6 @@ export default function BookingActionDrawer({
         if (!res.ok) throw new Error('Update failed')
       }
 
-      // 🔔 Sync to Google Calendar
       try {
         const calendarId = artistProfile.google_calendar_id || 'primary'
         await syncBookingToGoogle({
@@ -185,11 +186,10 @@ export default function BookingActionDrawer({
           startIso: start.toISOString(),
           endIso: end.toISOString(),
           timezone: 'America/Los_Angeles',
-          status: mapNumericStatusToScheddyStatus(booking.status), // keep current status semantics
+          status: mapNumericStatusToScheddyStatus(booking.status),
           description: notes || undefined,
         })
       } catch (e) {
-        // Don't block UI on sync errors
         console.error('Google sync failed:', e)
       }
 
@@ -204,14 +204,20 @@ export default function BookingActionDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
+      {/* Overlay ABOVE header icons (z-[60]) */}
+      <SheetOverlay className="fixed inset-0 bg-black/60 z-[95]" />
+
+      {/* Drawer content above everything */}
       <SheetContent
         side="right"
         className="
+          z-[100]
           w-full sm:max-w-lg
           p-0
           flex flex-col
           h-dvh max-h-dvh
           [height:100svh]
+          bg-[#262626] border-0
         "
       >
         {/* Sticky header */}
@@ -230,7 +236,6 @@ export default function BookingActionDrawer({
 
         {/* Scrollable body */}
         <div className="flex-1 min-h-0 overflow-y-auto p-6">
-          {/* Fallback if opened without a booking */}
           {open && missingBooking && (
             <div className="mt-2 text-sm">
               No booking selected. Close this panel and try again.
@@ -240,7 +245,6 @@ export default function BookingActionDrawer({
             </div>
           )}
 
-          {/* VIEW / EDIT */}
           {!missingBooking && (action === 'View' || action === 'Edit') && (
             <form className="space-y-5" onSubmit={handleEditSave}>
               {/* Service */}
@@ -354,7 +358,6 @@ export default function BookingActionDrawer({
 
               <form
                 action={async (fd) => {
-                  // 🔔 Sync delete to Google pre/parallel to server action
                   try {
                     await syncBookingToGoogle({
                       bookingId: String(booking.id),
@@ -370,7 +373,6 @@ export default function BookingActionDrawer({
                   } catch (e) {
                     console.error('Google delete sync failed:', e)
                   }
-                  // Now run your server cancel action
                   await cancelAction(fd)
                 }}
                 className="flex items-center justify-end gap-2 pt-2"
