@@ -11,6 +11,12 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://www.scheddy.us'),
+  title: 'scheddy',
+  description: '…'
+};
+
 export default function RootLayout({
   children,
   }: Readonly<{

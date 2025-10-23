@@ -1,15 +1,15 @@
 'use client';
 
-import { useSearchParams } from "next/navigation";
-import { magicLinkAction } from "@/app/actions";
-import { SubmitButton } from "@/components/submit-button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { FormMessage, Message } from "@/components/form-message";
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { magicLinkAction } from '@/app/actions';
+import { SubmitButton } from '@/components/submit-button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { FormMessage, Message } from '@/components/form-message';
 
-export default function MagicLinkClient({
-  message,
-}: { message?: Message }) {
+// Inner form that actually reads the search params
+function MagicLinkForm({ message }: { message?: Message }) {
   const qp = useSearchParams();
   const prefilled = qp.get('email') ?? '';
 
@@ -41,5 +41,14 @@ export default function MagicLinkClient({
         </div>
       </form>
     </div>
+  );
+}
+
+// Exported component wraps the form in Suspense
+export default function MagicLinkClient({ message }: { message?: Message }) {
+  return (
+    <Suspense fallback={<div className="p-6 text-sm text-[#808080]">Loading…</div>}>
+      <MagicLinkForm message={message} />
+    </Suspense>
   );
 }
