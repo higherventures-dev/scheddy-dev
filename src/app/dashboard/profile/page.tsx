@@ -1,34 +1,39 @@
-import { createClient } from "@/utils/supabase/server";
-import ProfileForm from "@/components/forms/users/ProfileForm";
-export default async function Profile() {
-const supabase = await createClient();
+import { createClient } from '@/utils/supabase/server'
+import ProfileForm from '@/components/forms/users/ProfileForm'
 
-// Step 1: Get logged-in user
+export default async function Profile() {
+  const supabase = await createClient()
+
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   if (!user || userError) {
-    return <div>You must be logged in to view this page.</div>;
+    return <div className="p-6">You must be logged in to view this page.</div>
   }
 
-  if (!user) {
-    // optionally redirect to login or show unauthorized
-    return <div>You must be logged in to view this page.</div>;
-  }
-
-  // fetch their profile here if needed
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
 
-return ( <div className="p-6 w-[30vw]">
-      <h1 className="text-xl mb-4">Profile</h1>
-      <ProfileForm userId={user.id} profile={profile} />
+  // Provide a base URL for the live preview (falls back if env missing)
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
+    'https://scheddy.us'
+
+  return (
+    <div className="p-6">
+      <div className="py-3 text-[1.125rem]/[1.5rem] font-bold">Profile</div>
+
+      {/* Full-width container; the form will render a two-column layout internally */}
+      <ProfileForm
+        userId={user.id}
+        profile={profile ?? undefined}
+        baseUrl={baseUrl}
+      />
     </div>
-);
+  )
 }
-    

@@ -15,7 +15,7 @@ export default function AddBookingDrawer() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button className="text-xs px-4 py-2 bg-[#313131] text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
-          + Add Booking
+          + Create Booking
         </Button>
       </SheetTrigger>
 

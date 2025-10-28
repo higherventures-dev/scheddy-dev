@@ -1,259 +1,276 @@
-'use server';
-
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
-import { createClient } from '@/utils/supabase/server';
-import { associateUserWithClient } from '@/features/users/services/associateUserWithClient';
-import { encodedRedirect } from '@/utils/utils'; // Make sure this exists
-import { supabaseAdmin } from '@/utils/supabase/admin'
-import { cookies } from 'next/headers';
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs';
-/** ---------------- SIGN IN ---------------- */
 // src/app/auth/actions.ts
+'use server'
+
+import 'server-only'
+
+import { redirect } from 'next/navigation'
+import { headers, cookies } from 'next/headers'
+
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
+import { createClient } from '@/utils/supabase/server'
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+
+import sgMail from '@sendgrid/mail'
+
+import { encodedRedirect } from '@/utils/utils'
+import { supabaseAdmin } from '@/utils/supabase/admin'
+
+// ---------- Required server envs ----------
+if (!process.env.SUPABASE_URL) throw new Error('Missing SUPABASE_URL')
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY')
+if (!process.env.SENDGRID_API_KEY) throw new Error('Missing SENDGRID_API_KEY')
+if (!process.env.SENDGRID_FROM) throw new Error('Missing SENDGRID_FROM')
+
+// Email sender (SendGrid)
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  await sgMail.send({ to, from: process.env.SENDGRID_FROM!, subject, html })
+}
+
+// Admin client for auth.admin.*
+const adminAuth = createSupabaseAdmin(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false } }
+)
+
+/** ---------------- SIGN IN (password) ---------------- */
 export async function signInAction(formData: FormData) {
-  const email = String(formData.get('email') ?? '').trim();
-  const password = String(formData.get('password') ?? '');
+  const email = String(formData.get('email') ?? '').trim()
+  const password = String(formData.get('password') ?? '')
 
-  const supabase = createServerActionClient({ cookies });
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const supabase = createServerActionClient({ cookies })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error || !data?.user) {
-    return redirect(`/auth/sign-in?error=${encodeURIComponent(error?.message || 'No user')}`);
+    return redirect(`/auth/sign-in?error=${encodeURIComponent(error?.message || 'No user')}`)
   }
 
-  const userId = data.user.id;
-
+  const userId = data.user.id
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', userId)
-    .single();
+    .single()
 
   if (pErr || !profile?.role) {
-    return redirect('/auth/sign-in?error=Missing+user+role');
+    return redirect('/auth/sign-in?error=Missing+user+role')
   }
 
   switch (String(profile.role).toLowerCase()) {
-    case 'client':  return redirect('/lounge');
-    case 'artist':  return redirect('/dashboard');
-    case 'studio':  return redirect('/studio');
-    case 'admin':   return redirect('/admin');
-    default:        return redirect('/unauthorized');
+    case 'client':  return redirect('/lounge')
+    case 'artist':  return redirect('/dashboard')
+    case 'studio':  return redirect('/studio')
+    case 'admin':   return redirect('/admin')
+    default:        return redirect('/unauthorized')
   }
 }
 
+/** ---------------- MAGIC LINK (Admin generateLink + SendGrid) ---------------- */
 export async function magicLinkAction(formData: FormData) {
-  const email = String(formData.get('email') ?? '').trim();
+  const email = String(formData.get('email') ?? '').trim()
   if (!email) {
-    return encodedRedirect('error', '/auth/magic-link', 'Email is required');
+    return encodedRedirect('error', '/auth/magic-link', 'Email is required')
   }
 
   const origin =
     (await headers()).get('origin') ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000';
+    'http://localhost:3000'
 
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithOtp({
+  // Create magic link (Supabase does NOT send the email)
+  const { data: linkData, error } = await adminAuth.auth.admin.generateLink({
+    type: 'magiclink',
     email,
-    options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-    },
-  });
-
+    options: { redirectTo: `${origin}/auth/callback` },
+  })
   if (error) {
-    return encodedRedirect('error', '/auth/magic-link', error.message);
+    return encodedRedirect('error', '/auth/magic-link', error.message)
   }
 
-  return encodedRedirect(
-    'success',
-    '/auth/magic-link',
-    'Check your email for a sign-in link.'
-  );
+  const link = linkData?.properties?.action_link ?? linkData?.properties?.email_otp_link
+  if (!link) {
+    return encodedRedirect('error', '/auth/magic-link', 'Could not create a magic link.')
+  }
+
+  await sendEmail({
+    to: email,
+    subject: 'Your Scheddy sign-in link',
+    html: `<p>Tap to sign in:</p><p><a href="${link}">Sign in</a></p>`,
+  })
+
+  return encodedRedirect('success', '/auth/magic-link', 'Check your email for a sign-in link.')
 }
 
-/**
- * Start phone sign-in by sending an SMS code.
- * Expects a <form> with a "phone" field (E.164 recommended, e.g. +14155551234).
- */
+/** ---------------- PHONE: SEND CODE (SMS via Supabase) ---------------- */
 export async function signInWithPhoneAction(formData: FormData) {
-  const phone = String(formData.get('phone') ?? '').trim();
+  const phone = String(formData.get('phone') ?? '').trim()
   if (!phone) {
-    return encodedRedirect('error', '/auth/phone', 'Phone number is required');
+    return encodedRedirect('error', '/auth/phone', 'Phone number is required')
   }
 
-  const origin =
-    (await headers()).get('origin') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000';
-
-  const supabase = await createClient();
-
+  const supabase = await createClient()
   const { error } = await supabase.auth.signInWithOtp({
     phone,
-    options: {
-      // If you’re using a callback route:
-      // emailRedirectTo works for email; for phone OTP you typically verify via code form.
-      // But keeping a path for post-submit UX is handy:
-      shouldCreateUser: true,
-      // data: { role: 'client' }, // optional metadata
-    },
-  });
+    options: { shouldCreateUser: true },
+  })
 
   if (error) {
-    return encodedRedirect('error', '/auth/phone', error.message);
+    return encodedRedirect('error', '/auth/phone', error.message)
   }
-
-  // Take the user to a page where they can enter the SMS code
-  return encodedRedirect('success', `/auth/phone/verify?phone=${encodeURIComponent(phone)}`, 'Code sent via SMS');
+  return encodedRedirect(
+    'success',
+    `/auth/phone/verify?phone=${encodeURIComponent(phone)}`,
+    'Code sent via SMS'
+  )
 }
 
-/**
- * Verify the SMS code the user received.
- * Expects "phone" and "code" fields in the form.
- */
+/** ---------------- PHONE: VERIFY CODE ---------------- */
 export async function verifyPhoneOtpAction(formData: FormData) {
-  const phone = String(formData.get('phone') ?? '').trim();
-  const code = String(formData.get('code') ?? '').trim();
+  const phone = String(formData.get('phone') ?? '').trim()
+  const code = String(formData.get('code') ?? '').trim()
 
   if (!phone || !code) {
-    return encodedRedirect('error', '/auth/phone/verify', 'Phone and code are required');
+    return encodedRedirect('error', '/auth/phone/verify', 'Phone and code are required')
   }
 
-  const supabase = await createClient();
-
+  const supabase = await createClient()
   const { data, error } = await supabase.auth.verifyOtp({
     phone,
     token: code,
     type: 'sms',
-  });
+  })
 
   if (error || !data?.session) {
-    return encodedRedirect('error', '/auth/phone/verify', error?.message ?? 'Invalid code');
+    return encodedRedirect('error', '/auth/phone/verify', error?.message ?? 'Invalid code')
   }
-
-  // Optional: look up role and route like your email sign-in flow
-  // const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-  // const role = profile?.role?.toLowerCase?.();
-
-  // Redirect wherever successful auth should land:
-  return encodedRedirect('success', '/dashboard', 'Signed in with phone');
+  return encodedRedirect('success', '/dashboard', 'Signed in with phone')
 }
 
-
-/** ---------------- SIGN UP (DEFAULT) ---------------- */
-export const signUpAction = async (formData: FormData) => {
-  const email = formData.get('email')?.toString();
-  const password = formData.get('password')?.toString();
-  const firstname = formData.get('firstname') as string;
-  const lastname = formData.get('lastname') as string;
-  //const role = formData.get('role') as string;
-  const role = "artist"
-  const supabase = await createClient();
-  const origin = (await headers()).get('origin');
+/** ---------------- SIGN UP (Admin generateLink + SendGrid) ---------------- */
+export async function signUpAction(formData: FormData) {
+  const email = formData.get('email')?.toString()
+  const password = formData.get('password')?.toString()
+  const firstname = (formData.get('firstname') as string) || ''
+  const lastname  = (formData.get('lastname') as string)  || ''
+  const role = 'artist' // default signup role
 
   if (!email || !password) {
-    return encodedRedirect('error', '/auth/sign-up', 'Email and password are required');
+    return encodedRedirect('error', '/auth/sign-up', 'Email and password are required')
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const origin =
+    (await headers()).get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000'
+
+  // Create signup confirmation link (Supabase does NOT send the email)
+  const { data: linkData, error: linkErr } = await adminAuth.auth.admin.generateLink({
+    type: 'signup',
     email,
     password,
     options: {
-      emailRedirectTo: `${origin}/auth/callback`,
-      data: { firstname, lastname, role },
+      redirectTo: `${origin}/auth/callback`,
+      data: { firstname, lastname, role }, // raw_user_meta_data
     },
-  });
-
-  if (error) {
-    return encodedRedirect('error', '/auth/sign-up', error.message);
+  })
+  if (linkErr) {
+    return encodedRedirect('error', '/auth/sign-up', linkErr.message)
   }
 
-  return encodedRedirect('success', '/auth/sign-up', 'Thanks for signing up! Please check your email for a verification link.');
-};
-
-/** ---------------- SIGN UP (CLIENT SPECIAL) ---------------- */
-export const signUpActionClient = async (formData: FormData) => {
-  const email = formData.get('email')?.toString();
-  const password = formData.get('password')?.toString();
-  const firstname = formData.get('firstname') as string;
-  const lastname = formData.get('lastname') as string;
-  const role = 'client';
-
-  if (!email || !password) {
-    return encodedRedirect(
-      'error',
-      '/auth/sign-up-client',
-      'Email and password are required'
-    );
+  const actionLink =
+    linkData?.properties?.action_link ?? linkData?.properties?.email_otp_link
+  if (!actionLink) {
+    return encodedRedirect('error', '/auth/sign-up', 'Could not create a signup link.')
   }
 
-  const origin = (await headers()).get('origin');
- const supabase = supabaseAdmin(); // uses SERVICE ROLE key
+  // Send confirmation email via SendGrid (bypasses Supabase rate limits)
+  await sendEmail({
+    to: email,
+    subject: 'Confirm your Scheddy account',
+    html: `
+      <p>Welcome${firstname ? `, ${firstname}` : ''}!</p>
+      <p>Click below to confirm your account and finish signup.</p>
+      <p><a href="${actionLink}">Confirm account</a></p>
+    `,
+  })
 
-  // 1️⃣ Create user with admin privileges
-  const { data: userData, error: userError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { firstname, lastname, role },
-  });
-
-  if (userError || !userData) {
-    console.error('Failed to create user:', userError);
-    return encodedRedirect('error', '/auth/sign-up-client', userError?.message ?? 'Unknown error');
+  // Upsert profile proactively (DB trigger removed)
+  const uid = linkData.user?.id
+  if (uid) {
+    const admin = supabaseAdmin()
+    await admin.from('profiles').upsert(
+      {
+        id: uid,
+        email_address: email,
+        first_name: firstname,
+        last_name: lastname,
+        role, // Postgres casts to public.user_role
+      },
+      { onConflict: 'id' }
+    )
   }
 
-  const userId = userData.user.id;
-
-  // 2️⃣ Associate user with preexisting client record
-  try {
-    await associateUserWithClient(userId, email);
-  } catch (err: any) {
-    console.warn('Failed to associate user with client:', err.message);
-    // optional: you can return a warning message instead of failing completely
-  }
-
-  // 3️⃣ Redirect success
   return encodedRedirect(
     'success',
-    '/auth/sign-up-client',
-    'Your account has been created and linked! Please check your email for login details.'
-  );
-};
+    '/auth/sign-up',
+    'Thanks for signing up! Check your email to confirm your account.'
+  )
+}
 
-/** ---------------- OTHER AUTH ACTIONS ---------------- */
-export const forgotPasswordAction = async (formData: FormData) => {
-  const email = formData.get('email')?.toString();
-  const supabase = await createClient();
-  const origin = (await headers()).get('origin');
+/** ---------------- FORGOT PASSWORD (Admin generateLink + SendGrid) ---------------- */
+export async function forgotPasswordAction(formData: FormData) {
+  const email = formData.get('email')?.toString()
+  if (!email) return redirect('/auth/forgot-password')
 
-  if (!email) return redirect('/auth/forgot-password');
+  const origin =
+    (await headers()).get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000'
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password`,
-  });
-
-  return redirect('/auth/forgot-password');
-};
-
-export const resetPasswordAction = async (formData: FormData) => {
-  const supabase = await createClient();
-  const password = formData.get('password') as string;
-  const confirmPassword = formData.get('confirmPassword') as string;
-
-  if (!password || !confirmPassword || password !== confirmPassword) {
-    return redirect('/auth/protected/reset-password');
+  // Create recovery link (Supabase does NOT send the email)
+  const { data, error } = await adminAuth.auth.admin.generateLink({
+    type: 'recovery',
+    email,
+    options: { redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password` },
+  })
+  if (error) {
+    return redirect(`/auth/forgot-password?error=${encodeURIComponent(error.message)}`)
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
-  return redirect('/auth/protected/reset-password');
-};
+  const link = data?.properties?.action_link ?? data?.properties?.email_otp_link
+  if (!link) {
+    return redirect('/auth/forgot-password?error=Could+not+create+reset+link')
+  }
 
-export const signOutAction = async () => {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  return redirect('/auth/sign-in');
-};
+  await sendEmail({
+    to: email,
+    subject: 'Reset your Scheddy password',
+    html: `
+      <p>Click below to reset your password.</p>
+      <p><a href="${link}">Reset password</a></p>
+    `,
+  })
+
+  return redirect('/auth/forgot-password?success=1')
+}
+
+/** ---------------- RESET PASSWORD (after user clicks email) ---------------- */
+export async function resetPasswordAction(formData: FormData) {
+  const supabase = await createClient()
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (!password || !confirmPassword || password !== confirmPassword) {
+    return redirect('/auth/protected/reset-password?error=Password+mismatch')
+  }
+
+  await supabase.auth.updateUser({ password })
+  return redirect('/auth/protected/reset-password?success=1')
+}
+
+/** ---------------- SIGN OUT ---------------- */
+export async function signOutAction() {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  return redirect('/auth/sign-in')
+}
