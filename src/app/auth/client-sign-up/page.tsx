@@ -1,4 +1,4 @@
-import { signUpActionClient } from "@/app/actions";
+import { signUpAction } from "@/app/actions";
 import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,7 @@ export default async function Signup(props: { searchParams: Promise<Message> }) 
           {/* --- SMS consent (phone + checkbox + links) --- */}
           <SmsConsentInline />
 
-          <SubmitButton formAction={signUpActionClient} pendingText="Signing up...">
+          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
             Sign up
           </SubmitButton>
 
