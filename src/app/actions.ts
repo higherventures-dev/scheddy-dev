@@ -21,10 +21,28 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing SUPABASE_SE
 if (!process.env.SENDGRID_API_KEY) throw new Error('Missing SENDGRID_API_KEY')
 if (!process.env.SENDGRID_FROM) throw new Error('Missing SENDGRID_FROM')
 
-// Email sender (SendGrid)
+// Email sender (SendGrid) — disable tracking so auth links aren’t rewritten
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  await sgMail.send({ to, from: process.env.SENDGRID_FROM!, subject, html })
+async function sendEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string
+  subject: string
+  html: string
+}) {
+  await sgMail.send({
+    to,
+    from: process.env.SENDGRID_FROM!,
+    subject,
+    html,
+    trackingSettings: {
+      clickTracking: { enable: false, enableText: false },
+      openTracking: { enable: false },
+      subscriptionTracking: { enable: false },
+    },
+  })
 }
 
 // Admin client for auth.admin.*
@@ -95,7 +113,11 @@ export async function magicLinkAction(formData: FormData) {
   await sendEmail({
     to: email,
     subject: 'Your Scheddy sign-in link',
-    html: `<p>Tap to sign in:</p><p><a href="${link}">Sign in</a></p>`,
+    html: `
+      <p>Tap to sign in:</p>
+      <p><a href="${link}">Sign in</a></p>
+      <p style="margin-top:16px">If the button doesn’t work, copy & paste this URL:<br>${link}</p>
+    `,
   })
 
   return encodedRedirect('success', '/auth/magic-link', 'Check your email for a sign-in link.')
@@ -191,6 +213,7 @@ export async function signUpAction(formData: FormData) {
       <p>Welcome${firstname ? `, ${firstname}` : ''}!</p>
       <p>Click below to confirm your account and finish signup.</p>
       <p><a href="${actionLink}">Confirm account</a></p>
+      <p style="margin-top:16px">If the button doesn’t work, copy & paste this URL:<br>${actionLink}</p>
     `,
   })
 
@@ -248,6 +271,7 @@ export async function forgotPasswordAction(formData: FormData) {
     html: `
       <p>Click below to reset your password.</p>
       <p><a href="${link}">Reset password</a></p>
+      <p style="margin-top:16px">If the button doesn’t work, copy & paste this URL:<br>${link}</p>
     `,
   })
 
