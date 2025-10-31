@@ -52,18 +52,90 @@ const adminAuth = createSupabaseAdmin(
   { auth: { persistSession: false } }
 )
 
+/** Resend a signup confirmation email via SendGrid using a fresh Supabase link */
+async function sendSignupConfirmationEmail(email: string, password: string) {
+  const origin =
+    (await headers()).get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000'
+
+  // Generate a fresh confirmation link (Supabase does NOT send the email)
+  const { data: linkData, error: linkErr } = await adminAuth.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    password, // required for a signup confirmation link
+    options: { redirectTo: `${origin}/auth/callback` },
+  })
+  if (linkErr) throw linkErr
+
+  const actionLink =
+    linkData?.properties?.action_link ?? linkData?.properties?.email_otp_link
+  if (!actionLink) throw new Error('Could not create a signup confirmation link.')
+
+  await sendEmail({
+    to: email,
+    subject: 'Confirm your Scheddy account',
+    html: `
+      <p>Almost there!</p>
+      <p>Please confirm your email to finish setting up your account.</p>
+      <p><a href="${actionLink}">Confirm account</a></p>
+      <p style="margin-top:16px">If the button doesn’t work, copy & paste this URL:<br>${actionLink}</p>
+    `,
+  })
+}
+
 /** ---------------- SIGN IN (password) ---------------- */
 export async function signInAction(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
 
   const supabase = createServerActionClient({ cookies })
+
+  // Try to sign in
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error || !data?.user) {
-    return redirect(`/auth/sign-in?error=${encodeURIComponent(error?.message || 'No user')}`)
+
+  // If Supabase says “email not confirmed,” resend and show a clear error
+  if (error) {
+    const msg = (error.message || '').toLowerCase()
+    const looksUnconfirmed =
+      msg.includes('email not confirmed') ||
+      msg.includes('confirm your email') ||
+      msg.includes('signup verification')
+
+    if (looksUnconfirmed) {
+      try {
+        await sendSignupConfirmationEmail(email, password)
+      } catch {
+        // swallow; still show guidance below
+      }
+      return redirect(
+        `/auth/sign-in?error=${encodeURIComponent(
+          'Please confirm your email. We just sent you a new confirmation link.'
+        )}`
+      )
+    }
+
+    // Other auth errors
+    return redirect(`/auth/sign-in?error=${encodeURIComponent(error.message || 'Sign-in failed')}`)
   }
 
-  const userId = data.user.id
+  // Defensive: if sign-in succeeded but the user is still not confirmed (misconfig)
+  const user = data?.user
+  const emailConfirmedAt = (user as any)?.email_confirmed_at as string | null | undefined
+  if (!emailConfirmedAt) {
+    try {
+      await sendSignupConfirmationEmail(email, password)
+    } catch {}
+    try { await supabase.auth.signOut() } catch {}
+    return redirect(
+      `/auth/sign-in?error=${encodeURIComponent(
+        'Please confirm your email. We just sent you a new confirmation link.'
+      )}`
+    )
+  }
+
+  // Fetch role and route
+  const userId = user.id
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
     .select('role')
