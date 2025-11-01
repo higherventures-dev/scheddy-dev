@@ -1,4 +1,4 @@
-// app/auth/callback/page.tsx - 10/31/2025
+// app/auth/callback/page.tsx
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
@@ -19,7 +19,16 @@ function CallbackInner() {
     let mounted = true
 
     ;(async () => {
-      const code = searchParams.get('code')
+      const code = searchParams.get('code') ?? undefined
+      const token_hash = searchParams.get('token_hash') ?? undefined
+      // magic link / recovery / email_change / signup typically set ?type=...
+      const type = (searchParams.get('type') ?? undefined) as
+        | 'magiclink'
+        | 'recovery'
+        | 'email_change'
+        | 'signup'
+        | undefined
+
       const dest =
         searchParams.get('next') ||
         searchParams.get('redirect_to') ||
@@ -28,11 +37,15 @@ function CallbackInner() {
       let error: { message: string } | null = null
 
       if (code) {
-        const res = await supabase.auth.exchangeCodeForSession(code)
-        error = res.error
+        // OAuth / PKCE callback
+        const { error: e } = await supabase.auth.exchangeCodeForSession(code)
+        error = e
+      } else if (token_hash && type) {
+        // Magic link / recovery / email-change callback
+        const { error: e } = await supabase.auth.verifyOtp({ token_hash, type })
+        error = e
       } else {
-        const res = await supabase.auth.exchangeCodeForSession()
-        error = res.error
+        error = { message: 'Missing auth parameters in callback URL' }
       }
 
       if (!mounted) return
