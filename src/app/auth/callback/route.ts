@@ -1,24 +1,45 @@
-import { createClient } from "@/utils/supabase/server";
-import { NextResponse } from "next/server";
+// app/auth/callback/route.ts
+import { NextResponse } from 'next/server'
+import { createClient } from '@/utils/supabase/server'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export async function GET(request: Request) {
-  // The `/auth/callback` route is required for the server-side auth flow implemented
-  // by the SSR package. It exchanges an auth code for the user's session.
-  // https://supabase.com/docs/guides/auth/server-side/nextjs
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get("code");
-  const origin = requestUrl.origin;
-  const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+  const url = new URL(request.url)
+  const next = url.searchParams.get('next') || url.searchParams.get('redirect_to') || '/dashboard'
+  const email = url.searchParams.get('email') ?? undefined
 
+  const supabase = await createClient()
+
+  // 1) OAuth/PKCE
+  const code = url.searchParams.get('code')
   if (code) {
-    const supabase = await createClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/auth/sign-in?error=${encodeURIComponent(error.message)}`, url)
+      )
+    }
+    return NextResponse.redirect(new URL(next, url))
   }
 
-  if (redirectTo) {
-    return NextResponse.redirect(`${origin}${redirectTo}`);
+  // 2) Magic link / recovery
+  const token_hash = url.searchParams.get('token_hash')
+  const type = url.searchParams.get('type') as 'magiclink' | 'recovery' | 'email_change' | 'signup' | null
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({ token_hash, type })
+    if (error) {
+      return NextResponse.redirect(
+        new URL(`/auth/sign-in?error=${encodeURIComponent(error.message)}`, url)
+      )
+    }
+    return NextResponse.redirect(new URL(next, url))
   }
 
-  // URL to redirect to after sign up process completes
-  return NextResponse.redirect(`${origin}/protected`);
+  // 3) Email hash flows must be handled on the client
+  const redirect = new URL('/auth/hash-callback', url)
+  if (email) redirect.searchParams.set('email', email)
+  redirect.searchParams.set('next', next)
+  return NextResponse.redirect(redirect)
 }
