@@ -360,18 +360,21 @@ export async function forgotPasswordAction(formData: FormData) {
 }
 
 /** ---------------- RESET PASSWORD (after user clicks email) ---------------- */
+// in src/app/auth/actions.ts
+
 export async function resetPasswordAction(formData: FormData) {
   const supabase = await createClient()
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
 
   if (!password || !confirmPassword || password !== confirmPassword) {
-    return redirect('/auth/protected/reset-password?error=Password+mismatch')
+    return redirect('/protected/reset-password?error=Password+mismatch')
   }
 
   await supabase.auth.updateUser({ password })
-  return redirect('/auth/protected/reset-password?success=1')
+  return redirect('/protected/reset-password?success=1') // ✅ corrected path
 }
+
 
 /** ---------------- SIGN OUT ---------------- */
 export async function signOutAction() {
