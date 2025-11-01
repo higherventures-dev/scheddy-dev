@@ -1,5 +1,5 @@
 // app/auth/forgot-password/page.tsx  (SERVER COMPONENT)
-import { forgotPasswordAction, magicLinkAction } from '@/app/actions'
+import { forgotPasswordAction } from '@/app/actions'
 import { FormMessage } from '@/components/form-message'
 import { SubmitButton } from '@/components/submit-button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +30,7 @@ export default function ForgotPassword({ searchParams }: Props) {
           style={{ backgroundColor: '#1c1c1c' }}
         >
           <header>
-            <h1 className="text-2xl font-medium">Reset or Passwordless Login</h1>
+            <h1 className="text-2xl font-medium">Reset your password</h1>
             <p className="text-sm text-secondary-foreground mt-1">
               Already have an account?{' '}
               <Link className="text-primary underline" href="/auth/sign-in">
@@ -52,31 +52,21 @@ export default function ForgotPassword({ searchParams }: Props) {
               required
               autoComplete="email"
             />
-            {/* carry next path if you want to route after success */}
+            {/* carry next path so the callback knows where to land after verify */}
             <input type="hidden" name="next" value="/protected/reset-password" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {/* Primary: Reset Password email */}
-            <SubmitButton>
-              Send Reset Email
-            </SubmitButton>
-
-            {/* Secondary: Passwordless login (magic link).
-                The button overrides the form's action with its own formAction. */}
-            <SubmitButton formAction={magicLinkAction} variant="secondary">
-              Login Without Password
-            </SubmitButton>
+          <div className="pt-2">
+            <SubmitButton>Send Reset Email</SubmitButton>
           </div>
 
           <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1 pt-3">
-            <li>Links expire for security. If it’s expired, we’ll offer to resend.</li>
-            <li>Check spam/promotions. We disable click-tracking so links aren’t broken by scanners.</li>
+            <li>Links expire for security; if it’s expired, you’ll be prompted to resend.</li>
+            <li>Check spam/promotions. We disable click-tracking to prevent broken links.</li>
           </ul>
         </form>
       </div>
 
-      {/* Shows SMTP provider info / tips if you already use this component */}
       <SmtpMessage />
     </>
   )
