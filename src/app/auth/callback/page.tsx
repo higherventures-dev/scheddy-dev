@@ -1,4 +1,4 @@
-// app/auth/callback/page.tsx
+// app/auth/callback/page.tsx - 10/31/2025
 'use client'
 
 import { Suspense, useEffect, useState } from 'react'
