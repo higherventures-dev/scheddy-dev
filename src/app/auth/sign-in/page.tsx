@@ -1,12 +1,17 @@
+// app/auth/sign-in/page.tsx
 'use client'
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useMemo } from 'react'
+import { useMemo, Suspense } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { SubmitButton } from '@/components/submit-button'
 import { signInAction } from '@/app/actions'
+
+// Prevent static prerendering (auth pages should be dynamic)
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 function MessageBanner() {
   const sp = useSearchParams()
@@ -27,7 +32,7 @@ function MessageBanner() {
     if (err) return { kind: 'error' as const, text: normalize(err) }
     if (ok) return { kind: 'success' as const, text: normalize(ok) }
     return null
-  }, [serialized, sp])
+  }, [serialized]) // serialize to trigger recompute on URL change
 
   if (!msg) return null
 
@@ -54,14 +59,22 @@ export default function Login() {
       >
         <h1 className="text-2xl font-medium text-center">Log in</h1>
 
-        {/* Shows messages from ?error / ?success */}
-        <MessageBanner />
+        {/* ✅ Wrap the component that uses useSearchParams() in Suspense */}
+        <Suspense
+          fallback={
+            <div className="mb-4 rounded-md border p-3 text-sm opacity-70">
+              Loading…
+            </div>
+          }
+        >
+          <MessageBanner />
+        </Suspense>
 
         <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
           <Label htmlFor="email">Email</Label>
           <Input name="email" placeholder="you@example.com" required type="email" />
 
-        <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center">
             <Label htmlFor="password">Password</Label>
           </div>
           <Input name="password" placeholder="Your password" required type="password" />
