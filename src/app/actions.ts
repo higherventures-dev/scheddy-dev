@@ -8,7 +8,6 @@ import { headers, cookies } from 'next/headers'
 
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { createClient } from '@/utils/supabase/server'
-import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
 
 import sgMail from '@sendgrid/mail'
 
@@ -20,6 +19,19 @@ if (!process.env.SUPABASE_URL) throw new Error('Missing SUPABASE_URL')
 if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY')
 if (!process.env.SENDGRID_API_KEY) throw new Error('Missing SENDGRID_API_KEY')
 if (!process.env.SENDGRID_FROM) throw new Error('Missing SENDGRID_FROM')
+
+// ---------- Helpers ----------
+function siteOrigin() {
+  return (
+    headers().get('origin') ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'http://localhost:3000'
+  )
+}
+function nextParamFrom(formData: FormData, fallback = '/dashboard') {
+  const raw = String(formData.get('next') ?? '').trim()
+  return raw || fallback
+}
 
 // Email sender (SendGrid) — disable tracking so auth links aren’t rewritten
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
@@ -47,24 +59,25 @@ async function sendEmail({
 
 // Admin client for auth.admin.*
 const adminAuth = createSupabaseAdmin(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
   { auth: { persistSession: false } }
 )
 
 /** Resend a signup confirmation email via SendGrid using a fresh Supabase link */
-async function sendSignupConfirmationEmail(email: string, password: string) {
-  const origin =
-    (await headers()).get('origin') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000'
+async function sendSignupConfirmationEmail(email: string, password: string, next = '/dashboard') {
+  const origin = siteOrigin()
 
   // Generate a fresh confirmation link (Supabase does NOT send the email)
   const { data: linkData, error: linkErr } = await adminAuth.auth.admin.generateLink({
     type: 'signup',
     email,
     password, // required for a signup confirmation link
-    options: { redirectTo: `${origin}/auth/callback` },
+    options: {
+      redirectTo: `${origin}/auth/callback?email=${encodeURIComponent(email)}&next=${encodeURIComponent(
+        next
+      )}`,
+    },
   })
   if (linkErr) throw linkErr
 
@@ -88,25 +101,27 @@ async function sendSignupConfirmationEmail(email: string, password: string) {
 export async function signInAction(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
   const password = String(formData.get('password') ?? '')
+  const next = nextParamFrom(formData, '/dashboard')
 
-  const supabase = createServerActionClient({ cookies })
+  const supabase = await createClient()
 
   // Try to sign in
   const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
-  // If Supabase says “email not confirmed,” resend and show a clear error
   if (error) {
+    const code = (error as any)?.code || ''
     const msg = (error.message || '').toLowerCase()
     const looksUnconfirmed =
+      code === 'email_not_confirmed' ||
       msg.includes('email not confirmed') ||
       msg.includes('confirm your email') ||
       msg.includes('signup verification')
 
     if (looksUnconfirmed) {
       try {
-        await sendSignupConfirmationEmail(email, password)
+        await sendSignupConfirmationEmail(email, password, next)
       } catch {
-        // swallow; still show guidance below
+        // ignore; still guide user below
       }
       return redirect(
         `/auth/sign-in?error=${encodeURIComponent(
@@ -124,7 +139,7 @@ export async function signInAction(formData: FormData) {
   const emailConfirmedAt = (user as any)?.email_confirmed_at as string | null | undefined
   if (!emailConfirmedAt) {
     try {
-      await sendSignupConfirmationEmail(email, password)
+      await sendSignupConfirmationEmail(email, password, next)
     } catch {}
     try { await supabase.auth.signOut() } catch {}
     return redirect(
@@ -158,20 +173,19 @@ export async function signInAction(formData: FormData) {
 /** ---------------- MAGIC LINK (Admin generateLink + SendGrid) ---------------- */
 export async function magicLinkAction(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
+  const next = nextParamFrom(formData, '/dashboard')
+
   if (!email) {
     return encodedRedirect('error', '/auth/magic-link', 'Email is required')
   }
 
-  const origin =
-    (await headers()).get('origin') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000'
+  const origin = siteOrigin()
 
   // Create magic link (Supabase does NOT send the email)
   const { data: linkData, error } = await adminAuth.auth.admin.generateLink({
     type: 'magiclink',
     email,
-    options: { redirectTo: `${origin}/auth/callback` },
+    options: { redirectTo: `${origin}/auth/callback?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}` },
   })
   if (error) {
     return encodedRedirect('error', '/auth/magic-link', error.message)
@@ -247,15 +261,13 @@ export async function signUpAction(formData: FormData) {
   const firstname = (formData.get('firstname') as string) || ''
   const lastname  = (formData.get('lastname') as string)  || ''
   const role = 'artist' // default signup role
+  const next = nextParamFrom(formData, '/dashboard')
 
   if (!email || !password) {
     return encodedRedirect('error', '/auth/sign-up', 'Email and password are required')
   }
 
-  const origin =
-    (await headers()).get('origin') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000'
+  const origin = siteOrigin()
 
   // Create signup confirmation link (Supabase does NOT send the email)
   const { data: linkData, error: linkErr } = await adminAuth.auth.admin.generateLink({
@@ -263,7 +275,7 @@ export async function signUpAction(formData: FormData) {
     email,
     password,
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${origin}/auth/callback?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`,
       data: { firstname, lastname, role }, // raw_user_meta_data
     },
   })
@@ -317,16 +329,13 @@ export async function forgotPasswordAction(formData: FormData) {
   const email = formData.get('email')?.toString()
   if (!email) return redirect('/auth/forgot-password')
 
-  const origin =
-    (await headers()).get('origin') ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'http://localhost:3000'
+  const origin = siteOrigin()
 
   // Create recovery link (Supabase does NOT send the email)
   const { data, error } = await adminAuth.auth.admin.generateLink({
     type: 'recovery',
     email,
-    options: { redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password` },
+    options: { redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password&email=${encodeURIComponent(email)}` },
   })
   if (error) {
     return redirect(`/auth/forgot-password?error=${encodeURIComponent(error.message)}`)
