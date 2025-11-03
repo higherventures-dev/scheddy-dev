@@ -22,6 +22,9 @@ export const metadata = {
   description: "The #1 Tattoo Artist Management System",
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const geistSans = Geist({
   display: "swap",
   subsets: ["latin"],

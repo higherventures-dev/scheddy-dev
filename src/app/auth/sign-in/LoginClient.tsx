@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { SubmitButton } from '@/components/submit-button'
 import { signInAction } from '@/app/actions'
+import Image from "next/image";
 
 export default function LoginClient({
   errorMessage,
@@ -28,7 +29,18 @@ export default function LoginClient({
         style={{ backgroundColor: '#1c1c1c' }}
         noValidate
       >
-        <h1 className="text-2xl font-medium text-center">Log in</h1>
+         {/* Brand row: logo to the left of the word "scheddy" */}
+                <div className="flex items-center justify-center gap-2">
+                  <Image
+                    src="/assets/images/logo.svg"
+                    alt="Scheddy logo"
+                    width={28}
+                    height={28}
+                    priority
+                    className="h-7 w-7"
+                  />
+                  <h1 className="text-xl font-medium text-white">scheddy</h1>
+                </div>
 
         {err && (
           <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800">
