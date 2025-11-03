@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Inter } from "next/font/google";
 import Header from '@/components/HeaderAuth';
+import AuthMenu from '@/components/AuthMenu';
 import Footer from '@/components/dashboard/footer';
 import SideBar from '@/ui/dashboard/sidebar';
 import ArtistSideBar from '@/ui/dashboard/artist-sidebar';
