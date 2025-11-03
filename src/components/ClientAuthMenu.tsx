@@ -79,9 +79,9 @@ export default function AuthMenu() {
   // Render the icon row regardless; links work even before auth hydrates.
   return (
     <div className="flex items-center gap-3 flex-nowrap min-w-fit overflow-visible relative z-[100] pr-2">
-      <IconButton icon={MessageSquare} label="Messages" href="/dashboard/messages" />
-      <IconButton icon={Bell} label="Notifications" href="/dashboard/notifications" />
-      <IconButton icon={User} label="Profile" href="/dashboard/profile" />
+      {/* <IconButton icon={MessageSquare} label="Messages" href="/lounge/messages" />
+      <IconButton icon={Bell} label="Notifications" href="/lounge/notifications" /> */}
+      {/* <IconButton icon={User} label="Profile" href="/lounge/profile" /> */}
       <IconButton icon={LogOutIcon} label="Sign out" onClick={handleSignOut} />
     </div>
   );

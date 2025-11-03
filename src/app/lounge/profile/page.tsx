@@ -1,5 +1,4 @@
 import { createClient } from "@/utils/supabase/server";
-import ProfileForm from "@/components/forms/LoungeProfileForm";
 export default async function Profile() {
 const supabase = await createClient();
 
@@ -27,7 +26,7 @@ const supabase = await createClient();
 
 return ( <div className="p-6 w-[30vw]">
       <h1 className="text-xl mb-4">Profile</h1>
-      <LoungeProfileForm userId={user.id} profile={profile} />
+      {/* <LoungeProfileForm userId={user.id} profile={profile} /> */}
     </div>
 );
 }

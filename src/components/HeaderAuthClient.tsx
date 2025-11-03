@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "./ui/button";
 import { createClient } from "@/utils/supabase/server";
-import AuthMenu from '@/components/AuthMenu';
+import ClientAuthMenu from '@/components/ClientAuthMenu';
 
 export default async function HeaderAuthClient() {
   const supabase = await createClient();
@@ -56,7 +56,7 @@ export default async function HeaderAuthClient() {
       </div>
       <div className="flex justify-end gap-8 w-[50vw]">
         <span className="py-2 text-xs">Welcome, {firstName}!</span>
-        <AuthMenu />
+        <ClientAuthMenu />
       </div>
     </div>
   );
